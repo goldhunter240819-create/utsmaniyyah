@@ -23,6 +23,10 @@ $currentUser = $_SESSION['current_user'] ?? null;
   <!-- SheetJS for Excel (.xlsx) Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+  <!-- SweetAlert2 Luxury Alert System -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="assets/css/style.css">
   <style>
@@ -120,37 +124,33 @@ $currentUser = $_SESSION['current_user'] ?? null;
       <div class="login-logo">
         <img src="assets/images/logo-yanbua.png" alt="Logo Yanbu'a">
       </div>
+      <div class="login-brand-tag">PORTAL RESMI PENGURUS</div>
       <h2 class="login-title">SISTEM MUNAQOSYAH</h2>
       <p class="login-sub">Lajnah Muroqobah Yanbu'a Kabupaten Lampung Barat</p>
 
       <form id="loginForm">
         <div class="form-group" style="text-align: left;">
           <label class="form-label">Username Pengurus</label>
-          <input type="text" id="loginUsername" class="form-control" placeholder="Masukkan username" required autocomplete="username">
+          <div class="input-with-icon">
+            <input type="text" id="loginUsername" class="form-control" placeholder="Masukkan username pengurus" required autocomplete="username">
+          </div>
         </div>
         <div class="form-group" style="text-align: left;">
           <label class="form-label">Password</label>
-          <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password" required autocomplete="current-password">
+          <div class="input-with-icon">
+            <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan kata sandi" required autocomplete="current-password">
+          </div>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 8px; font-weight: 700;">
-          Masuk ke Sistem RTQ →
+        <button type="submit" class="btn btn-primary btn-login-submit" style="width: 100%; padding: 13px; margin-top: 10px; font-weight: 700;">
+          <span>Masuk ke Sistem RTQ</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </button>
       </form>
 
-      <div class="quick-account-box">
-        <div class="quick-account-title">
-          <span>🔑</span> <span>Akun Pengurus Tersedia (Klik Cepat):</span>
-        </div>
-        <div>
-          <span class="account-badge-btn" onclick="fillLogin('Maul', 'Basenglah123.')">👑 Developer: <strong>Maul</strong></span>
-          <span class="account-badge-btn" onclick="fillLogin('Utsmaniyyah1', 'Utsmaniyyah1')">🕌 Admin: <strong>RTQ 1</strong></span>
-          <span class="account-badge-btn" onclick="fillLogin('Utsmaniyyah2', 'Utsmaniyyah2')">🕌 Admin: <strong>RTQ 2</strong></span>
-          <span class="account-badge-btn" onclick="fillLogin('Utsmaniyyah3', 'Utsmaniyyah3')">🕌 Admin: <strong>RTQ 3</strong></span>
-        </div>
-        <div style="font-size: 0.72rem; color: var(--dark-500); margin-top: 6px;">
-          * Setiap admin RTQ hanya dapat melihat dan mengelola santri RTQ-nya sendiri (terisolasi aman).
-        </div>
+      <div class="login-footer-security">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span>Sistem Akses Terisolasi & Terenkripsi Aman</span>
       </div>
     </div>
   </div>
@@ -167,64 +167,74 @@ $currentUser = $_SESSION['current_user'] ?? null;
         </div>
         <div class="sidebar-brand">
           <h2>MUNAQOSYAH</h2>
-          <p id="sidebarActiveRtqLabel">Yanbu'a Lampung Barat</p>
+          <div class="sidebar-brand-badge" id="sidebarActiveRtqLabel">Yanbu'a Lampung Barat</div>
         </div>
       </div>
 
-      <!-- Info Login Pengurus -->
-      <div style="padding: 12px 16px; background: rgba(0,0,0,0.18); font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between;">
-        <div>
-          <div style="opacity: 0.7; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px;">Akun Aktif:</div>
-          <div style="font-weight: 700; color: var(--gold-400);" id="currentUserBadge">
-            <?= htmlspecialchars($currentUser['nama'] ?? '') ?>
+      <!-- Info Login Pengurus (Luxury Glass Card) -->
+      <div class="sidebar-user-card">
+        <div class="user-card-avatar">
+          <span id="userAvatarChar">M</span>
+        </div>
+        <div class="user-card-info">
+          <div class="user-card-name" id="currentUserBadge"><?= htmlspecialchars($currentUser['nama'] ?? 'Pengurus RTQ') ?></div>
+          <div class="user-card-status">
+            <span class="status-dot"></span>
+            <span class="status-text">Terhubung Aman</span>
           </div>
         </div>
-        <button class="btn btn-danger btn-sm" onclick="handleLogout()" title="Keluar / Logout" style="padding: 4px 8px; font-size: 0.75rem;">
-          🚪 Keluar
+        <button class="user-logout-btn" onclick="handleLogout()" title="Keluar dari Sistem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
         </button>
       </div>
 
       <ul class="sidebar-menu">
-        <li class="menu-category">Utama</li>
+        <li class="menu-category">Menu Utama</li>
         <li class="nav-item">
           <a class="nav-link active" data-tab="tab-dashboard">
-            <i>📊</i> <span>Dashboard</span>
+            <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Dashboard</span>
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" data-tab="tab-santri">
-            <i>👥</i> <span>Data Santri</span>
+            <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Data Santri</span>
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" data-tab="tab-penilaian">
-            <i>📝</i> <span>Penilaian Ujian</span>
+            <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span>Penilaian Ujian</span>
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" data-tab="tab-rekap">
-            <i>🏆</i> <span>Rekap & Ranking</span>
+            <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+            <span>Rekap & Ranking</span>
           </a>
         </li>
 
         <li class="menu-category">Dokumen & Cetak</li>
         <li class="nav-item">
           <a class="nav-link" data-tab="tab-cetak">
-            <i>📜</i> <span>Cetak Syahadah</span>
+            <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            <span>Cetak Syahadah</span>
           </a>
         </li>
 
         <li class="menu-category">Konfigurasi</li>
         <li class="nav-item">
           <a class="nav-link" data-tab="tab-pengaturan">
-            <i>⚙️</i> <span>Pengaturan Sistem</span>
+            <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Pengaturan Sistem</span>
           </a>
         </li>
       </ul>
 
       <div class="sidebar-footer">
-        <div>Metode Yanbu'a Lampung Barat</div>
-        <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 2px;">Terisolasi Aman per Pengurus</div>
+        <div class="footer-title">Metode Yanbu'a Lampung Barat</div>
+        <div class="footer-sub">Multi-RTQ Multi-Pengurus Terisolasi</div>
       </div>
     </aside>
 
@@ -233,23 +243,29 @@ $currentUser = $_SESSION['current_user'] ?? null;
       <!-- Topbar Header -->
       <header class="topbar">
         <div class="topbar-title">
-          <button class="menu-toggle" id="menuToggle" aria-label="Buka Menu">☰</button>
-          <h1 id="topbarPageTitle">Dashboard Munaqosyah</h1>
+          <button class="menu-toggle" id="menuToggle" aria-label="Buka Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <div>
+            <h1 id="topbarPageTitle">Dashboard Munaqosyah</h1>
+          </div>
         </div>
         <div class="topbar-actions">
           <div class="topbar-filters">
             <!-- Dropdown RTQ: Hanya aktif untuk Developer Maul, terkunci untuk Admin RTQ -->
             <select id="topbarRtqFilter" class="topbar-select" title="Pilih Unit RTQ">
-              <option value="ALL">Semua RTQ (Gabungan)</option>
+              <option value="ALL">Semua Unit RTQ (Gabungan)</option>
             </select>
             <select id="topbarPeriodeFilter" class="topbar-select" title="Pilih Periode / Tahun Ujian">
             </select>
           </div>
           <button class="btn btn-outline btn-sm" onclick="exportRekapExcel()">
-            📥 <span>Export Excel</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Ekspor Excel</span>
           </button>
-          <button class="btn btn-gold btn-sm" onclick="openAddSantriModal()">
-            ➕ <span>Tambah Santri</span>
+          <button class="btn btn-primary btn-sm" onclick="openAddSantriModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Tambah Santri</span>
           </button>
         </div>
       </header>
@@ -786,11 +802,5 @@ $currentUser = $_SESSION['current_user'] ?? null;
 
   <!-- Main JavaScript Logic -->
   <script src="assets/js/app.js"></script>
-  <script>
-    function fillLogin(u, p) {
-      document.getElementById('loginUsername').value = u;
-      document.getElementById('loginPassword').value = p;
-    }
-  </script>
 </body>
 </html>

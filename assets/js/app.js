@@ -25,6 +25,68 @@ const SUBJECT_KEYS = [
   { key: 'kitabah', label: 'Kitabah' }
 ];
 
+// SweetAlert2 Helper Suite (Islamic Emerald & Gold Luxury Theme)
+const SwalAlert = {
+  success: (title, text = '') => {
+    return Swal.fire({
+      icon: 'success',
+      title: title,
+      text: text,
+      confirmButtonColor: '#059669',
+      confirmButtonText: 'Alhamdulillah, Baik',
+      timer: 2500,
+      timerProgressBar: true
+    });
+  },
+  error: (title, text = '') => {
+    return Swal.fire({
+      icon: 'error',
+      title: title,
+      text: text,
+      confirmButtonColor: '#059669',
+      confirmButtonText: 'Tutup'
+    });
+  },
+  warning: (title, text = '') => {
+    return Swal.fire({
+      icon: 'warning',
+      title: title,
+      text: text,
+      confirmButtonColor: '#f59e0b',
+      confirmButtonText: 'Mengerti'
+    });
+  },
+  confirm: async (title, text = '', confirmText = 'Ya, Lanjutkan', isDanger = false) => {
+    return await Swal.fire({
+      title: title,
+      html: text,
+      icon: isDanger ? 'warning' : 'question',
+      showCancelButton: true,
+      confirmButtonColor: isDanger ? '#dc2626' : '#059669',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: confirmText,
+      cancelButtonText: 'Batal',
+      reverseButtons: true
+    });
+  },
+  toast: (title, icon = 'success') => {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 1800,
+      timerProgressBar: false,
+      background: '#ffffff',
+      color: '#0f172a',
+      iconColor: icon === 'success' ? '#10b981' : '#f59e0b'
+    });
+    Toast.fire({
+      icon: icon,
+      title: title
+    });
+  }
+};
+
 // Konverter Nilai Angka ke Huruf Ejaan Bahasa Indonesia
 function angkaKeTerbilang(angka) {
   if (angka === null || angka === undefined || isNaN(angka)) return '-';
@@ -129,23 +191,30 @@ async function handleLogin(e) {
     });
     const result = await res.json();
     if (result.status === 'success') {
+      SwalAlert.toast(`Selamat datang, ${result.user.nama}`);
       await loadDataFromBackend();
     } else {
-      alert(result.message || 'Login gagal! Periksa username & password.');
+      SwalAlert.error('Login Gagal', result.message || 'Periksa kembali username & password.');
     }
   } catch (err) {
-    alert('Terjadi kesalahan saat menghubungi server.');
+    SwalAlert.error('Kesalahan Jaringan', 'Terjadi kesalahan saat menghubungi server.');
   }
 }
 
 // Handle Logout
 async function handleLogout() {
-  if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
+  const confirmResult = await SwalAlert.confirm(
+    'Konfirmasi Keluar',
+    'Apakah Anda yakin ingin keluar dari sistem Munaqosyah?',
+    'Ya, Keluar'
+  );
+  if (confirmResult.isConfirmed) {
     try {
       await fetch('api.php?action=logout');
       document.getElementById('loginScreen').style.display = 'flex';
       document.getElementById('mainApp').style.display = 'none';
       document.getElementById('loginForm')?.reset();
+      SwalAlert.toast('Berhasil keluar dari sistem');
     } catch (err) {
       location.reload();
     }
@@ -195,13 +264,17 @@ function updateFilterSelectors() {
   if (userBadge) {
     userBadge.textContent = appData.currentUser.nama;
   }
+  const avatarChar = document.getElementById('userAvatarChar');
+  if (avatarChar) {
+    avatarChar.textContent = (appData.currentUser.nama || 'P').charAt(0).toUpperCase();
+  }
   const sidebarRtqLabel = document.getElementById('sidebarActiveRtqLabel');
   if (sidebarRtqLabel) {
     if (isPengurus) {
       const myRtq = appData.daftarRtq.find(r => r.id == appData.currentUser.rtq_id);
       sidebarRtqLabel.textContent = myRtq ? myRtq.nama : 'Pengurus RTQ';
     } else {
-      sidebarRtqLabel.textContent = 'Semua RTQ (Super Admin)';
+      sidebarRtqLabel.textContent = 'Semua RTQ (Developer)';
     }
   }
 }
@@ -357,16 +430,16 @@ function renderDashboard() {
       let subTot = 0;
       list.forEach(s => { subTot += s[sub.key] || 0; });
       const subAvg = total > 0 ? (subTot / total).toFixed(1) : 0;
-      const pct = Math.min(100, Math.max(0, (subAvg / 10) * 100));
+      const pct = Math.min(100, Math.max(0, subAvg));
 
       html += `
         <div style="margin-bottom: 14px;">
           <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">
             <span>${sub.label}</span>
-            <span style="color: var(--primary-700);">${subAvg} / 10</span>
+            <span style="color: var(--primary-700); font-weight: 700;">${subAvg} / 100</span>
           </div>
           <div style="height: 9px; background: var(--gray-200); border-radius: 10px; overflow: hidden;">
-            <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, var(--primary-600), var(--gold-500)); border-radius: 10px; transition: width 0.5s ease;"></div>
+            <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #10b981, #f59e0b); border-radius: 10px; transition: width 0.5s ease;"></div>
           </div>
         </div>
       `;
@@ -396,7 +469,7 @@ function renderSantriTable() {
   }
 
   tbody.innerHTML = filtered.map((s, idx) => {
-    const genderBadge = s.gender === 'L' ? '<span class="badge badge-primary">L (Bin)</span>' : '<span class="badge badge-gold">P (Binti)</span>';
+    const genderBadge = s.gender === 'L' ? '<span class="badge badge-gender-l">L (Bin)</span>' : '<span class="badge badge-gender-p">P (Binti)</span>';
     return `
       <tr>
         <td class="text-center font-bold">${idx + 1}</td>
@@ -405,7 +478,7 @@ function renderSantriTable() {
           <div style="font-size: 0.78rem; color: var(--dark-500);">${escapeHtml(s.ttl || '-')}</div>
         </td>
         <td>
-          <span class="badge badge-primary" style="font-size: 0.75rem;">${escapeHtml(s.rtq_kode || s.rtq_nama || '-')}</span>
+          <span class="badge badge-rtq">${escapeHtml(s.rtq_kode || s.rtq_nama || '-')}</span>
         </td>
         <td>${genderBadge}</td>
         <td>
@@ -413,14 +486,22 @@ function renderSantriTable() {
           <div>Ujian: <code>${escapeHtml(s.no_ujian || '-')}</code></div>
         </td>
         <td>
-          <div style="font-size: 0.8rem; font-family: monospace; color: var(--primary-800);">${escapeHtml(s.no_syahadah || '-')}</div>
+          <div style="font-size: 0.8rem; font-family: monospace; color: #047857; font-weight: 600;">${escapeHtml(s.no_syahadah || '-')}</div>
         </td>
         <td class="text-center">
-          <div style="display: flex; gap: 6px; justify-content: center;">
-            <button class="btn btn-outline btn-sm btn-icon" title="Edit Santri" onclick="openEditSantriModal(${s.id})">✏️</button>
-            <button class="btn btn-outline btn-sm btn-icon" title="Cetak Syahadah Depan" onclick="previewSingleCetak(${s.id}, 'depan')">📜</button>
-            <button class="btn btn-outline btn-sm btn-icon" title="Cetak Transkrip Belakang" onclick="previewSingleCetak(${s.id}, 'belakang')">📋</button>
-            <button class="btn btn-danger btn-sm btn-icon" title="Hapus" onclick="confirmDeleteSantri(${s.id})">🗑️</button>
+          <div class="action-btn-group">
+            <button class="btn-icon-action edit" title="Edit Data Santri" onclick="openEditSantriModal(${s.id})">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            <button class="btn-icon-action syahadah" title="Cetak Syahadah Depan" onclick="previewSingleCetak(${s.id}, 'depan')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            </button>
+            <button class="btn-icon-action transkrip" title="Cetak Transkrip Belakang" onclick="previewSingleCetak(${s.id}, 'belakang')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            </button>
+            <button class="btn-icon-action delete" title="Hapus Santri" onclick="confirmDeleteSantri(${s.id})">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
           </div>
         </td>
       </tr>
@@ -534,18 +615,25 @@ async function handleSaveSantri(e) {
     if (result.status === 'success') {
       closeModal('santriModal');
       await loadDataFromBackend();
+      SwalAlert.success('Berhasil Disimpan', 'Data santri berhasil disimpan ke database MySQL.');
     } else {
-      alert(result.message || 'Gagal menyimpan santri');
+      SwalAlert.error('Gagal Menyimpan', result.message || 'Gagal menyimpan data santri');
     }
   } catch (err) {
-    alert('Terjadi kesalahan saat menyimpan ke database MySQL.');
+    SwalAlert.error('Kesalahan', 'Terjadi kesalahan saat menyimpan ke database MySQL.');
   }
 }
 
 async function confirmDeleteSantri(id) {
   const s = appData.santri.find(x => x.id == id);
   if (!s) return;
-  if (confirm(`Yakin ingin menghapus santri "${s.nama}" dari database MySQL? Nilai ujiannya juga akan terhapus permanen.`)) {
+  const confirmResult = await SwalAlert.confirm(
+    'Hapus Data Santri?',
+    `Yakin ingin menghapus santri "<strong>${escapeHtml(s.nama)}</strong>" dari database MySQL?<br><small style="color: #64748b;">Seluruh riwayat nilai ujian santri ini juga akan terhapus permanen.</small>`,
+    'Ya, Hapus Santri',
+    true
+  );
+  if (confirmResult.isConfirmed) {
     try {
       const res = await fetch('api.php?action=delete_santri', {
         method: 'POST',
@@ -555,9 +643,12 @@ async function confirmDeleteSantri(id) {
       const result = await res.json();
       if (result.status === 'success') {
         await loadDataFromBackend();
+        SwalAlert.toast(`Santri ${s.nama} berhasil dihapus`);
+      } else {
+        SwalAlert.error('Gagal', result.message || 'Gagal menghapus santri dari database.');
       }
     } catch (err) {
-      alert('Gagal menghapus data dari database.');
+      SwalAlert.error('Kesalahan', 'Gagal menghapus data dari database.');
     }
   }
 }
@@ -698,7 +789,7 @@ function renderRekapTable() {
 // Export Rekap to Excel
 function exportRekapExcel() {
   if (typeof XLSX === 'undefined') {
-    alert('SheetJS belum siap.');
+    SwalAlert.error('Pemberitahuan', 'Library ekspor Excel (SheetJS) belum siap.');
     return;
   }
 
@@ -1124,7 +1215,7 @@ function printAllSyahadah(docType = 'both') {
 
   const { list } = calculateSantriStats();
   if (list.length === 0) {
-    alert('Tidak ada data santri untuk dicetak.');
+    SwalAlert.warning('Pemberitahuan', 'Tidak ada data santri untuk dicetak.');
     return;
   }
 
@@ -1208,11 +1299,13 @@ async function handleSaveConfig(e) {
     });
     const result = await res.json();
     if (result.status === 'success') {
-      alert('Data Lembaga berhasil disimpan ke database MySQL!');
+      SwalAlert.success('Berhasil Disimpan', 'Data Lembaga berhasil disimpan ke database MySQL!');
       await loadDataFromBackend();
+    } else {
+      SwalAlert.error('Gagal', result.message || 'Gagal menyimpan data lembaga.');
     }
   } catch (err) {
-    alert('Gagal menyimpan data lembaga.');
+    SwalAlert.error('Kesalahan', 'Gagal menyimpan data lembaga.');
   }
 }
 
@@ -1261,10 +1354,12 @@ async function handleSaveRtq(e) {
     if (result.status === 'success') {
       closeModal('rtqModal');
       await loadDataFromBackend();
-      alert('Unit RTQ berhasil disimpan!');
+      SwalAlert.success('Berhasil Disimpan', 'Data Unit RTQ berhasil disimpan!');
+    } else {
+      SwalAlert.error('Gagal', result.message || 'Gagal menyimpan unit RTQ.');
     }
   } catch (err) {
-    alert('Gagal menyimpan unit RTQ.');
+    SwalAlert.error('Kesalahan', 'Gagal menyimpan unit RTQ.');
   }
 }
 
@@ -1311,10 +1406,12 @@ async function handleSavePeriode(e) {
     if (result.status === 'success') {
       closeModal('periodeModal');
       await loadDataFromBackend();
-      alert('Periode ujian berhasil disimpan!');
+      SwalAlert.success('Berhasil Disimpan', 'Periode ujian berhasil disimpan!');
+    } else {
+      SwalAlert.error('Gagal', result.message || 'Gagal menyimpan periode ujian.');
     }
   } catch (err) {
-    alert('Gagal menyimpan periode ujian.');
+    SwalAlert.error('Kesalahan', 'Gagal menyimpan periode ujian.');
   }
 }
 
@@ -1329,7 +1426,7 @@ function openRoleModal() {
       <div class="role-card ${isCur ? 'active' : ''}" onclick="selectUserRole(${u.id})">
         <div>
           <div class="role-title">
-            <span>${u.role === 'SUPER_ADMIN' ? '👑' : '🕌'}</span>
+            <span>${u.role === 'DEVELOPER' ? '👑' : '🕌'}</span>
             <span>${escapeHtml(u.nama)}</span>
           </div>
           <div class="role-desc">Username: <code>${escapeHtml(u.username)}</code> ${u.rtq_nama ? '| ' + escapeHtml(u.rtq_nama) : '| Seluruh 3 RTQ'}</div>
@@ -1355,10 +1452,12 @@ async function selectUserRole(userId) {
     if (result.status === 'success') {
       closeModal('roleModal');
       await loadDataFromBackend();
-      alert(`Berhasil beralih ke: ${result.user.nama}`);
+      SwalAlert.toast(`Beralih profil ke: ${result.user.nama}`);
+    } else {
+      SwalAlert.error('Gagal', result.message || 'Gagal mengganti profil pengurus.');
     }
   } catch (err) {
-    alert('Gagal mengganti profil pengurus.');
+    SwalAlert.error('Kesalahan', 'Gagal mengganti profil pengurus.');
   }
 }
 

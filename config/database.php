@@ -136,6 +136,51 @@ try {
         $stmtUser->execute([$u[0], $u[1], $u[2], $u[3], $u[4]]);
     }
 
+    // 5. Seed Lembaga Default
+    $pdo->exec("
+        INSERT INTO `lembaga` (`id`, `nama`, `metode`, `wilayah`, `tingkat`, `pimpinan_lajnah`, `ketua_panitia`, `kkm`) VALUES
+        (1, 'LAJNAH MUROQOBAH LEMBAGA PENDIDIKAN AL-QUR\'AN', 'THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR\'AN YANBU\'A', 'KABUPATEN LAMPUNG BARAT', 'RTQ TINGKAT DASAR', 'SYA\'BUL MUBAROK', 'A. Muslih Abdurrahman', 60.00)
+        ON DUPLICATE KEY UPDATE `kkm`=VALUES(`kkm`);
+    ");
+
+    // 6. Seed Data Santri & Nilai RTQ 1 Skala Puluhan (0-100) jika masih kosong
+    $santriCount = (int)$pdo->query("SELECT COUNT(*) FROM `santri`")->fetchColumn();
+    if ($santriCount === 0) {
+        $santriScores = [
+            [1, 'M. Ishaq Alfa Fikri', 'L', '0001', '0001', 'LMY-LB/RTQ-U1/001/09/10/2025', 80, 70, 65, 60, 100, 80, 80, 75, 70],
+            [2, 'Ibnul Hasan Mubarok', 'L', '0002', '0002', 'LMY-LB/RTQ-U1/002/09/10/2025', 90, 60, 70, 65, 100, 80, 75, 90, 90],
+            [3, 'Tienda Azka Mubarokah', 'P', '0003', '0003', 'LMY-LB/RTQ-U1/003/09/10/2025', 100, 70, 65, 57, 90, 100, 80, 60, 70],
+            [4, 'Sheena Hayomi Arzalna', 'P', '0004', '0004', 'LMY-LB/RTQ-U1/004/09/10/2025', 95, 70, 60, 60, 100, 80, 70, 70, 55],
+            [5, 'Hanifah Arum Manisa', 'P', '0005', '0005', 'LMY-LB/RTQ-U1/005/09/10/2025', 90, 60, 55, 55, 60, 55, 65, 55, 60],
+            [6, 'Riska Dwi Setiawati', 'P', '0006', '0006', 'LMY-LB/RTQ-U1/006/09/10/2025', 95, 70, 60, 60, 100, 90, 75, 70, 80],
+            [7, 'Ni\'matul Ilma Khoirunisa', 'P', '0007', '0007', 'LMY-LB/RTQ-U1/007/09/10/2025', 85, 70, 60, 85, 100, 100, 70, 85, 80],
+            [8, 'Zulfa Asyifa Zahira', 'P', '0008', '0008', 'LMY-LB/RTQ-U1/008/09/10/2025', 70, 60, 70, 60, 85, 70, 80, 75, 70],
+            [9, 'Lailatul Rohmah', 'P', '0009', '0009', 'LMY-LB/RTQ-U1/009/09/10/2025', 90, 90, 60, 80, 100, 95, 80, 70, 90],
+            [10, 'Meliana Okta Sari', 'P', '0010', '0010', 'LMY-LB/RTQ-U1/010/09/10/2025', 95, 70, 65, 70, 95, 100, 80, 86, 70],
+            [11, 'Gera Atha Praseta', 'L', '0011', '0011', 'LMY-LB/RTQ-U1/011/09/10/2025', 85, 60, 65, 65, 100, 95, 75, 65, 57]
+        ];
+
+        $insSantri = $pdo->prepare("
+            INSERT INTO `santri` (`id`, `rtq_id`, `periode_id`, `no_urut`, `no_induk`, `no_ujian`, `no_syahadah`, `nama`, `gender`, `ttl`, `alamat`)
+            VALUES (?, 1, 1, ?, ?, ?, ?, ?, ?, 'Tambak Jaya, 2013', 'Tambak Jaya, Way Tenong, Lampung Barat')
+        ");
+
+        $insNilai = $pdo->prepare("
+            INSERT INTO `nilai` (`santri_id`, `ghorib`, `tajwid`, `tartil`, `surat`, `doa`, `tauhid`, `wudlu`, `sholat`, `kitabah`, `total`, `rata_rata`, `is_lulus`)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+
+        foreach ($santriScores as $s) {
+            $id = $s[0];
+            $total = round($s[6] + $s[7] + $s[8] + $s[9] + $s[10] + $s[11] + $s[12] + $s[13] + $s[14], 2);
+            $rata = round($total / 9, 2);
+            $is_lulus = ($rata >= 60) ? 1 : 0;
+
+            $insSantri->execute([$id, $id, $s[3], $s[4], $s[5], $s[1], $s[2]]);
+            $insNilai->execute([$id, $s[6], $s[7], $s[8], $s[9], $s[10], $s[11], $s[12], $s[13], $s[14], $total, $rata, $is_lulus]);
+        }
+    }
+
 } catch (PDOException $e) {
     die("Koneksi Database Gagal: " . $e->getMessage());
 }
