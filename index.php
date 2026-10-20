@@ -529,6 +529,7 @@ $currentUser = $_SESSION['current_user'] ?? null;
               </div>
             </div>
             <div class="card-body">
+              <div id="cfgRoleNotice" style="margin-bottom: 18px;"></div>
               <form id="configForm">
                 <div class="form-grid">
                   <div class="form-group">

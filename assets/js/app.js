@@ -126,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
   setupEventListeners();
   await loadDataFromBackend();
+  switchTab('tab-dashboard');
 });
 
 // Load data dari PHP & MySQL Backend
@@ -156,11 +157,15 @@ async function loadDataFromBackend() {
         santri: data.santri
       };
 
-      // Terapkan isolasi visual untuk Pengurus RTQ
-      const isDeveloper = (appData.currentUser.role === 'DEVELOPER');
+      // Terapkan isolasi visual untuk Pengurus RTQ vs Developer
+      const isDeveloper = (appData.currentUser && (appData.currentUser.role === 'DEVELOPER' || appData.currentUser.role === 'SUPER_ADMIN' || appData.currentUser.username === 'Maul'));
+      
       const btnAddRtq = document.getElementById('btnAddRtqBtn');
       if (btnAddRtq) btnAddRtq.style.display = isDeveloper ? 'inline-flex' : 'none';
       
+      const btnAddPeriode = document.getElementById('btnAddPeriodeBtn');
+      if (btnAddPeriode) btnAddPeriode.style.display = isDeveloper ? 'inline-flex' : 'none';
+
       const saveLembagaWrap = document.getElementById('btnSaveLembagaWrap');
       if (saveLembagaWrap) saveLembagaWrap.style.display = isDeveloper ? 'block' : 'none';
 
@@ -193,6 +198,7 @@ async function handleLogin(e) {
     if (result.status === 'success') {
       SwalAlert.toast(`Selamat datang, ${result.user.nama}`);
       await loadDataFromBackend();
+      switchTab('tab-dashboard');
     } else {
       SwalAlert.error('Login Gagal', result.message || 'Periksa kembali username & password.');
     }
@@ -211,6 +217,7 @@ async function handleLogout() {
   if (confirmResult.isConfirmed) {
     try {
       await fetch('api.php?action=logout');
+      switchTab('tab-dashboard'); // Reset tab aktif kembali ke Dashboard
       document.getElementById('loginScreen').style.display = 'flex';
       document.getElementById('mainApp').style.display = 'none';
       document.getElementById('loginForm')?.reset();
@@ -326,7 +333,13 @@ function switchTab(tabId) {
   if (tabId === 'tab-cetak') setupCetakTab();
   if (tabId === 'tab-pengaturan') populateConfigTab();
 
+  const sidebar = document.getElementById('sidebar');
   if (sidebar && window.innerWidth <= 992) sidebar.classList.remove('show');
+
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent && mainContent.scrollTo) {
+    mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 // Calculate Stats & Ranks
@@ -1243,6 +1256,58 @@ function populateConfigTab() {
   document.getElementById('cfgKetuaPanitia').value = lbg.ketua_panitia || '';
   document.getElementById('cfgKkm').value = lbg.kkm || 60;
 
+  const isDeveloper = (appData.currentUser && (appData.currentUser.role === 'DEVELOPER' || appData.currentUser.role === 'SUPER_ADMIN' || appData.currentUser.username === 'Maul'));
+
+  // Tampilkan notifikasi role status
+  const noticeEl = document.getElementById('cfgRoleNotice');
+  if (noticeEl) {
+    if (isDeveloper) {
+      noticeEl.innerHTML = `
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; color: #065f46; font-size: 0.88rem; box-shadow: 0 2px 6px rgba(16,185,129,0.08);">
+          <span style="font-size: 1.4rem; line-height: 1;">👑</span>
+          <div>
+            <strong>Hak Akses Developer Aktif (${escapeHtml(appData.currentUser.nama || 'Developer')}):</strong> 
+            Formulir terbuka untuk diedit. Anda dapat memperbarui profil Lembaga Induk, Pimpinan Lajnah, dan Batas KKM Kelulusan di bawah.
+          </div>
+        </div>
+      `;
+    } else {
+      noticeEl.innerHTML = `
+        <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; color: #92400e; font-size: 0.88rem;">
+          <span style="font-size: 1.4rem; line-height: 1;">🔒</span>
+          <div>
+            <strong>Akses Pengurus RTQ (${escapeHtml(appData.currentUser.nama || 'Pengurus')}):</strong> 
+            Parameter Lembaga Induk & KKM berstatus Terkunci (Hanya Developer). Anda dapat mengelola data operasional RTQ Anda pada tabel unit di bawah.
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Terapkan status disable/enable pada input config lembaga
+  const cfgLembagaInputs = document.querySelectorAll('#configForm input');
+  cfgLembagaInputs.forEach(inp => {
+    inp.disabled = !isDeveloper;
+    if (isDeveloper) {
+      inp.removeAttribute('disabled');
+      inp.style.backgroundColor = '#ffffff';
+      inp.style.cursor = 'text';
+    } else {
+      inp.setAttribute('disabled', 'disabled');
+      inp.style.backgroundColor = '#f8fafc';
+      inp.style.cursor = 'not-allowed';
+    }
+  });
+
+  const saveLembagaWrap = document.getElementById('btnSaveLembagaWrap');
+  if (saveLembagaWrap) saveLembagaWrap.style.display = isDeveloper ? 'block' : 'none';
+
+  const btnAddRtq = document.getElementById('btnAddRtqBtn');
+  if (btnAddRtq) btnAddRtq.style.display = isDeveloper ? 'inline-flex' : 'none';
+
+  const btnAddPeriode = document.getElementById('btnAddPeriodeBtn');
+  if (btnAddPeriode) btnAddPeriode.style.display = isDeveloper ? 'inline-flex' : 'none';
+
   // Render Tabel RTQ
   const rtqTbody = document.getElementById('rtqListTableBody');
   if (rtqTbody) {
@@ -1255,7 +1320,7 @@ function populateConfigTab() {
         <td>${escapeHtml(r.ketua_penguji)}</td>
         <td>${escapeHtml(r.wa || '-')}</td>
         <td class="text-center">
-          <button class="btn btn-outline btn-sm btn-icon" onclick="openEditRtqModal(${r.id})">✏️</button>
+          <button class="btn btn-outline btn-sm btn-icon" onclick="openEditRtqModal(${r.id})" title="Edit RTQ">✏️</button>
         </td>
       </tr>
     `).join('');
@@ -1272,7 +1337,7 @@ function populateConfigTab() {
         <td>${escapeHtml(p.tanggal_syahadah || '-')}</td>
         <td>${escapeHtml(p.titimangsa || '-')}</td>
         <td class="text-center">
-          <button class="btn btn-outline btn-sm btn-icon" onclick="openEditPeriodeModal(${p.id})">✏️</button>
+          <button class="btn btn-outline btn-sm btn-icon" onclick="openEditPeriodeModal(${p.id})" title="Edit Periode">✏️</button>
         </td>
       </tr>
     `).join('');
@@ -1301,6 +1366,7 @@ async function handleSaveConfig(e) {
     if (result.status === 'success') {
       SwalAlert.success('Berhasil Disimpan', 'Data Lembaga berhasil disimpan ke database MySQL!');
       await loadDataFromBackend();
+      populateConfigTab();
     } else {
       SwalAlert.error('Gagal', result.message || 'Gagal menyimpan data lembaga.');
     }

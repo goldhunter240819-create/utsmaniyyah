@@ -56,7 +56,7 @@ try {
             `username` VARCHAR(50) NOT NULL UNIQUE,
             `password` VARCHAR(255) NOT NULL,
             `nama` VARCHAR(100) NOT NULL,
-            `role` ENUM('DEVELOPER', 'PENGURUS_RTQ') NOT NULL,
+            `role` VARCHAR(50) NOT NULL DEFAULT 'PENGURUS_RTQ',
             `rtq_id` INT NULL,
             FOREIGN KEY (`rtq_id`) REFERENCES `rtq`(`id`) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -99,6 +99,13 @@ try {
             FOREIGN KEY (`santri_id`) REFERENCES `santri`(`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+
+    // Pastikan kolom role di users adalah VARCHAR(50) agar mendukung role DEVELOPER tanpa batasan ENUM
+    try {
+        $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `role` VARCHAR(50) NOT NULL DEFAULT 'PENGURUS_RTQ'");
+    } catch (Exception $e) {
+        // Table or column already modified
+    }
 
     // Pastikan 3 RTQ terdaftar
     $pdo->exec("
