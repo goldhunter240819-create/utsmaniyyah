@@ -74,7 +74,17 @@ async function loadDataFromBackend() {
   try {
     const res = await fetch(`api.php?action=get_init&rtq_id=${rtqFilter}&periode_id=${periodeFilter}`);
     const data = await res.json();
+    
+    if (data.status === 'unauthorized') {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'none';
+      return;
+    }
+
     if (data.status === 'success') {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'flex';
+
       appData = {
         currentUser: data.currentUser,
         lembaga: data.lembaga,
@@ -83,12 +93,62 @@ async function loadDataFromBackend() {
         daftarUsers: data.daftarUsers,
         santri: data.santri
       };
+
+      // Terapkan isolasi visual untuk Pengurus RTQ
+      const isDeveloper = (appData.currentUser.role === 'DEVELOPER');
+      const btnAddRtq = document.getElementById('btnAddRtqBtn');
+      if (btnAddRtq) btnAddRtq.style.display = isDeveloper ? 'inline-flex' : 'none';
+      
+      const saveLembagaWrap = document.getElementById('btnSaveLembagaWrap');
+      if (saveLembagaWrap) saveLembagaWrap.style.display = isDeveloper ? 'block' : 'none';
+
+      const cfgLembagaInputs = document.querySelectorAll('#configForm input');
+      cfgLembagaInputs.forEach(inp => {
+        inp.disabled = !isDeveloper;
+      });
+
       renderAll();
       updateFilterSelectors();
     }
   } catch (err) {
     console.error('Error fetching data from api.php:', err);
-    alert('Gagal terhubung ke database MySQL. Pastikan XAMPP Apache dan MySQL aktif.');
+  }
+}
+
+// Handle Login Form
+async function handleLogin(e) {
+  e.preventDefault();
+  const u = document.getElementById('loginUsername').value.trim();
+  const p = document.getElementById('loginPassword').value.trim();
+
+  try {
+    const res = await fetch('api.php?action=login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      await loadDataFromBackend();
+    } else {
+      alert(result.message || 'Login gagal! Periksa username & password.');
+    }
+  } catch (err) {
+    alert('Terjadi kesalahan saat menghubungi server.');
+  }
+}
+
+// Handle Logout
+async function handleLogout() {
+  if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
+    try {
+      await fetch('api.php?action=logout');
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('loginForm')?.reset();
+    } catch (err) {
+      location.reload();
+    }
   }
 }
 
@@ -1315,6 +1375,7 @@ function backupDataJson() {
 
 // Event Listeners
 function setupEventListeners() {
+  document.getElementById('loginForm')?.addEventListener('submit', handleLogin);
   document.getElementById('searchSantriInput')?.addEventListener('input', renderSantriTable);
   document.getElementById('santriForm')?.addEventListener('submit', handleSaveSantri);
   document.getElementById('rtqForm')?.addEventListener('submit', handleSaveRtq);

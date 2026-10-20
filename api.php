@@ -1,57 +1,109 @@
 <?php
 /**
  * REST API Backend for Sistem Penilaian Munaqosyah & Cetak Syahadah RTQ Utsmaniyyah
- * Powered by PHP & MySQL (PDO)
+ * Strict Multi-RTQ Data Isolation & Role Management
  */
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/config/database.php';
 
-// Inisialisasi session user default jika belum login
-if (!isset($_SESSION['current_user'])) {
-    $_SESSION['current_user'] = [
-        'id' => 1,
-        'username' => 'admin',
-        'nama' => 'Super Admin Lajnah Pusat',
-        'role' => 'SUPER_ADMIN',
-        'rtq_id' => null
-    ];
-}
-
 $action = $_GET['action'] ?? '';
 
 try {
+    // ---------------------------------------------------------
+    // AUTH: LOGIN & LOGOUT
+    // ---------------------------------------------------------
+    if ($action === 'login') {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $username = trim($input['username'] ?? '');
+        $password = trim($input['password'] ?? '');
+
+        $stmt = $pdo->prepare("
+            SELECT u.*, r.nama AS rtq_nama, r.kode AS rtq_kode 
+            FROM `users` u 
+            LEFT JOIN `rtq` r ON u.rtq_id = r.id 
+            WHERE u.username = ?
+        ");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+
+        if ($user && ($user['password'] === $password || password_verify($password, $user['password']))) {
+            $_SESSION['current_user'] = [
+                'id' => (int)$user['id'],
+                'username' => $user['username'],
+                'nama' => $user['nama'],
+                'role' => $user['role'],
+                'rtq_id' => $user['rtq_id'] ? (int)$user['rtq_id'] : null,
+                'rtq_nama' => $user['rtq_nama'] ?? 'Semua RTQ (Developer)',
+                'rtq_kode' => $user['rtq_kode'] ?? 'ALL'
+            ];
+            echo json_encode(['status' => 'success', 'user' => $_SESSION['current_user']]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Username atau Password salah!']);
+        }
+        exit;
+    }
+
+    if ($action === 'logout') {
+        unset($_SESSION['current_user']);
+        session_destroy();
+        echo json_encode(['status' => 'success']);
+        exit;
+    }
+
+    // Cek Session User Login
+    if (!isset($_SESSION['current_user'])) {
+        echo json_encode(['status' => 'unauthorized', 'message' => 'Silakan login terlebih dahulu']);
+        exit;
+    }
+
+    $currentUser = $_SESSION['current_user'];
+    $isDeveloper = ($currentUser['role'] === 'DEVELOPER');
+    $userRtqId = $currentUser['rtq_id'];
+
     switch ($action) {
         // ---------------------------------------------------------
-        // 1. GET INITIAL FULL DATA
+        // 1. GET INITIAL FULL DATA (STRICT ISOLATION)
         // ---------------------------------------------------------
         case 'get_init':
-            $currentUser = $_SESSION['current_user'];
-
             // Data Lembaga
             $stmtLembaga = $pdo->query("SELECT * FROM `lembaga` LIMIT 1");
             $lembaga = $stmtLembaga->fetch() ?: [];
 
-            // Daftar RTQ
-            $stmtRtq = $pdo->query("SELECT * FROM `rtq` ORDER BY `id` ASC");
-            $daftarRtq = $stmtRtq->fetchAll();
+            // Daftar RTQ (Jika Pengurus RTQ, hanya boleh lihat RTQ miliknya)
+            if ($isDeveloper) {
+                $stmtRtq = $pdo->query("SELECT * FROM `rtq` ORDER BY `id` ASC");
+                $daftarRtq = $stmtRtq->fetchAll();
+            } else {
+                $stmtRtq = $pdo->prepare("SELECT * FROM `rtq` WHERE `id` = ?");
+                $stmtRtq->execute([$userRtqId]);
+                $daftarRtq = $stmtRtq->fetchAll();
+            }
 
             // Daftar Periode
             $stmtPeriode = $pdo->query("SELECT * FROM `periode` ORDER BY `id` DESC");
             $daftarPeriode = $stmtPeriode->fetchAll();
 
-            // Daftar Users / Pengurus
-            $stmtUsers = $pdo->query("
-                SELECT u.id, u.username, u.nama, u.role, u.rtq_id, r.nama AS rtq_nama 
-                FROM `users` u 
-                LEFT JOIN `rtq` r ON u.rtq_id = r.id 
-                ORDER BY u.id ASC
-            ");
-            $daftarUsers = $stmtUsers->fetchAll();
+            // Daftar Users (Hanya developer yang boleh lihat daftar user)
+            $daftarUsers = [];
+            if ($isDeveloper) {
+                $stmtUsers = $pdo->query("
+                    SELECT u.id, u.username, u.nama, u.role, u.rtq_id, r.nama AS rtq_nama 
+                    FROM `users` u 
+                    LEFT JOIN `rtq` r ON u.rtq_id = r.id 
+                    ORDER BY u.id ASC
+                ");
+                $daftarUsers = $stmtUsers->fetchAll();
+            }
 
-            // Filter santri berdasarkan role
-            $rtqFilter = $_GET['rtq_id'] ?? ($currentUser['role'] === 'PENGURUS_RTQ' ? $currentUser['rtq_id'] : 'ALL');
+            // Filter RTQ & Periode
+            // PENGURUS_RTQ DIPAKSA HANYA MELIHAT DATA RTQ-NYA SENDIRI!
+            if ($isDeveloper) {
+                $rtqFilter = $_GET['rtq_id'] ?? 'ALL';
+            } else {
+                $rtqFilter = $userRtqId;
+            }
             $periodeFilter = $_GET['periode_id'] ?? 'ALL';
 
             $sql = "
@@ -96,23 +148,34 @@ try {
             break;
 
         // ---------------------------------------------------------
-        // 2. SWITCH USER / ROLE LOGIN
+        // 2. SWITCH USER (Hanya Developer "Maul" yang bisa switch cepat)
         // ---------------------------------------------------------
         case 'switch_user':
+            if (!$isDeveloper) {
+                echo json_encode(['status' => 'error', 'message' => 'Hanya akun Developer yang dapat berganti profil langsung']);
+                exit;
+            }
             $input = json_decode(file_get_contents('php://input'), true);
             $userId = (int)($input['user_id'] ?? 0);
 
-            $stmt = $pdo->prepare("SELECT * FROM `users` WHERE `id` = ?");
+            $stmt = $pdo->prepare("
+                SELECT u.*, r.nama AS rtq_nama, r.kode AS rtq_kode 
+                FROM `users` u 
+                LEFT JOIN `rtq` r ON u.rtq_id = r.id 
+                WHERE u.id = ?
+            ");
             $stmt->execute([$userId]);
             $user = $stmt->fetch();
 
             if ($user) {
                 $_SESSION['current_user'] = [
-                    'id' => $user['id'],
+                    'id' => (int)$user['id'],
                     'username' => $user['username'],
                     'nama' => $user['nama'],
                     'role' => $user['role'],
-                    'rtq_id' => $user['rtq_id']
+                    'rtq_id' => $user['rtq_id'] ? (int)$user['rtq_id'] : null,
+                    'rtq_nama' => $user['rtq_nama'] ?? 'Semua RTQ (Developer)',
+                    'rtq_kode' => $user['rtq_kode'] ?? 'ALL'
                 ];
                 echo json_encode(['status' => 'success', 'user' => $_SESSION['current_user']]);
             } else {
@@ -121,12 +184,19 @@ try {
             break;
 
         // ---------------------------------------------------------
-        // 3. SIMPAN / EDIT SANTRI
+        // 3. SIMPAN / EDIT SANTRI (STRICT ISOLATION)
         // ---------------------------------------------------------
         case 'save_santri':
             $data = json_decode(file_get_contents('php://input'), true);
             $id = !empty($data['id']) ? (int)$data['id'] : null;
-            $rtq_id = (int)($data['rtq_id'] ?? 1);
+
+            // Jika bukan developer, paksa rtq_id milik pengurus yang login
+            if (!$isDeveloper) {
+                $rtq_id = $userRtqId;
+            } else {
+                $rtq_id = (int)($data['rtq_id'] ?? 1);
+            }
+
             $periode_id = (int)($data['periode_id'] ?? 1);
             $nama = trim($data['nama'] ?? '');
             $gender = $data['gender'] ?? 'L';
@@ -144,7 +214,16 @@ try {
             }
 
             if ($id) {
-                // UPDATE
+                // Pastikan jika bukan developer, santri yang diedit adalah milik RTQ-nya
+                if (!$isDeveloper) {
+                    $stmtCheck = $pdo->prepare("SELECT `rtq_id` FROM `santri` WHERE `id` = ?");
+                    $stmtCheck->execute([$id]);
+                    if ($stmtCheck->fetchColumn() != $userRtqId) {
+                        echo json_encode(['status' => 'error', 'message' => 'Anda tidak memiliki hak akses mengubah santri RTQ lain!']);
+                        exit;
+                    }
+                }
+
                 $stmt = $pdo->prepare("
                     UPDATE `santri` 
                     SET `rtq_id`=?, `periode_id`=?, `nama`=?, `gender`=?, `ttl`=?, `ayah`=?, `ibu`=?, `alamat`=?, `no_induk`=?, `no_ujian`=?, `no_syahadah`=?
@@ -152,7 +231,6 @@ try {
                 ");
                 $stmt->execute([$rtq_id, $periode_id, $nama, $gender, $ttl, $ayah, $ibu, $alamat, $no_induk, $no_ujian, $no_syahadah, $id]);
             } else {
-                // INSERT
                 $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM `santri` WHERE `rtq_id` = ? AND `periode_id` = ?");
                 $stmtCount->execute([$rtq_id, $periode_id]);
                 $nextNo = $stmtCount->fetchColumn() + 1;
@@ -164,7 +242,6 @@ try {
                 $stmt->execute([$rtq_id, $periode_id, $nextNo, $no_induk, $no_ujian, $no_syahadah, $nama, $gender, $ttl, $ayah, $ibu, $alamat]);
                 $id = $pdo->lastInsertId();
 
-                // Buat record nilai kosong
                 $stmtNilai = $pdo->prepare("INSERT INTO `nilai` (`santri_id`) VALUES (?)");
                 $stmtNilai->execute([$id]);
             }
@@ -173,18 +250,28 @@ try {
             break;
 
         // ---------------------------------------------------------
-        // 4. HAPUS SANTRI
+        // 4. HAPUS SANTRI (STRICT ISOLATION)
         // ---------------------------------------------------------
         case 'delete_santri':
             $data = json_decode(file_get_contents('php://input'), true);
             $id = (int)($data['id'] ?? 0);
+
+            if (!$isDeveloper) {
+                $stmtCheck = $pdo->prepare("SELECT `rtq_id` FROM `santri` WHERE `id` = ?");
+                $stmtCheck->execute([$id]);
+                if ($stmtCheck->fetchColumn() != $userRtqId) {
+                    echo json_encode(['status' => 'error', 'message' => 'Anda tidak berhak menghapus santri dari RTQ lain!']);
+                    exit;
+                }
+            }
+
             $stmt = $pdo->prepare("DELETE FROM `santri` WHERE `id` = ?");
             $stmt->execute([$id]);
             echo json_encode(['status' => 'success']);
             break;
 
         // ---------------------------------------------------------
-        // 5. UPDATE NILAI
+        // 5. UPDATE NILAI (STRICT ISOLATION)
         // ---------------------------------------------------------
         case 'update_nilai':
             $data = json_decode(file_get_contents('php://input'), true);
@@ -192,17 +279,24 @@ try {
             $subject = $data['subject'] ?? '';
             $value = (float)($data['value'] ?? 0);
 
+            if (!$isDeveloper) {
+                $stmtCheck = $pdo->prepare("SELECT `rtq_id` FROM `santri` WHERE `id` = ?");
+                $stmtCheck->execute([$santri_id]);
+                if ($stmtCheck->fetchColumn() != $userRtqId) {
+                    echo json_encode(['status' => 'error', 'message' => 'Anda tidak berhak mengubah nilai santri dari RTQ lain!']);
+                    exit;
+                }
+            }
+
             $allowed = ['ghorib', 'tajwid', 'tartil', 'surat', 'doa', 'tauhid', 'wudlu', 'sholat', 'kitabah'];
             if (!in_array($subject, $allowed)) {
                 echo json_encode(['status' => 'error', 'message' => 'Mata ujian tidak valid']);
                 exit;
             }
 
-            // Update subjek nilai
             $stmt = $pdo->prepare("UPDATE `nilai` SET `$subject` = ? WHERE `santri_id` = ?");
             $stmt->execute([$value, $santri_id]);
 
-            // Hitung ulang total dan rata-rata
             $stmtGet = $pdo->prepare("SELECT * FROM `nilai` WHERE `santri_id` = ?");
             $stmtGet->execute([$santri_id]);
             $n = $stmtGet->fetch();
@@ -222,9 +316,13 @@ try {
             break;
 
         // ---------------------------------------------------------
-        // 6. UPDATE DATA LEMBAGA
+        // 6. UPDATE DATA LEMBAGA (Hanya Developer)
         // ---------------------------------------------------------
         case 'save_lembaga':
+            if (!$isDeveloper) {
+                echo json_encode(['status' => 'error', 'message' => 'Hanya Developer yang dapat mengubah data lembaga induk']);
+                exit;
+            }
             $data = json_decode(file_get_contents('php://input'), true);
             $stmt = $pdo->prepare("
                 UPDATE `lembaga` 
@@ -249,6 +347,13 @@ try {
         case 'save_rtq':
             $data = json_decode(file_get_contents('php://input'), true);
             $id = !empty($data['id']) ? (int)$data['id'] : null;
+
+            // Jika bukan developer, hanya boleh update RTQ miliknya sendiri
+            if (!$isDeveloper && $id != $userRtqId) {
+                echo json_encode(['status' => 'error', 'message' => 'Anda hanya berhak mengedit data RTQ Anda sendiri!']);
+                exit;
+            }
+
             $kode = trim($data['kode'] ?? '');
             $nama = trim($data['nama'] ?? '');
             $alamat = trim($data['alamat'] ?? '');
@@ -260,14 +365,13 @@ try {
                 $stmt = $pdo->prepare("UPDATE `rtq` SET `kode`=?, `nama`=?, `alamat`=?, `kepala_rtq`=?, `ketua_penguji`=?, `wa`=? WHERE `id`=?");
                 $stmt->execute([$kode, $nama, $alamat, $kepala, $penguji, $wa, $id]);
             } else {
+                if (!$isDeveloper) {
+                    echo json_encode(['status' => 'error', 'message' => 'Hanya Developer yang dapat menambah unit RTQ baru']);
+                    exit;
+                }
                 $stmt = $pdo->prepare("INSERT INTO `rtq` (`kode`, `nama`, `alamat`, `kepala_rtq`, `ketua_penguji`, `wa`) VALUES (?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$kode, $nama, $alamat, $kepala, $penguji, $wa]);
                 $id = $pdo->lastInsertId();
-
-                // Otomatis buatkan user pengurus untuk RTQ baru
-                $username = strtolower(str_replace([' ', '-'], '', $kode));
-                $stmtUser = $pdo->prepare("INSERT INTO `users` (`username`, `password`, `nama`, `role`, `rtq_id`) VALUES (?, 'rtq123', ?, 'PENGURUS_RTQ', ?)");
-                $stmtUser->execute([$username, "Pengurus $nama", $id]);
             }
 
             echo json_encode(['status' => 'success', 'rtq_id' => $id]);

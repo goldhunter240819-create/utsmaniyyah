@@ -1,13 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/config/database.php';
-$currentUser = $_SESSION['current_user'] ?? [
-    'id' => 1,
-    'username' => 'admin',
-    'nama' => 'Super Admin Lajnah Pusat',
-    'role' => 'SUPER_ADMIN',
-    'rtq_id' => null
-];
+$isLoggedIn = isset($_SESSION['current_user']);
+$currentUser = $_SESSION['current_user'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -17,7 +12,7 @@ $currentUser = $_SESSION['current_user'] ?? [
   <title>Sistem Penilaian Munaqosyah & Cetak Syahadah - RTQ Utsmaniyyah</title>
   <meta name="description" content="Aplikasi Web Sistem Informasi Penilaian Munaqosyah dan Cetak Syahadah RTQ Utsmaniyyah Metode Yanbu'a Lampung Barat.">
   
-  <!-- Favicon Logo Yanbua PNG Asli -->
+  <!-- Favicon Logo Yanbua PNG Asli Transparan -->
   <link rel="icon" type="image/png" href="assets/images/logo-yanbua.png">
 
   <!-- Google Fonts: Plus Jakarta Sans & Amiri -->
@@ -30,10 +25,140 @@ $currentUser = $_SESSION['current_user'] ?? [
 
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    /* Styling Khusus Layar Login */
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #072a20 0%, #0d4432 50%, #146c43 100%);
+      padding: 20px;
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 460px;
+      padding: 36px 32px;
+      text-align: center;
+      position: relative;
+    }
+    .login-logo {
+      width: 85px;
+      height: 85px;
+      margin: 0 auto 14px;
+      background: #f0f7f4;
+      border-radius: 50%;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 15px rgba(13,68,50,0.15);
+    }
+    .login-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .login-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary-900);
+      margin-bottom: 4px;
+    }
+    .login-sub {
+      font-size: 0.85rem;
+      color: var(--dark-500);
+      margin-bottom: 24px;
+    }
+    .quick-account-box {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f8faf9;
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--gray-300);
+      text-align: left;
+      font-size: 0.8rem;
+    }
+    .quick-account-title {
+      font-weight: 700;
+      color: var(--primary-800);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .account-badge-btn {
+      display: inline-block;
+      margin: 3px 2px;
+      padding: 4px 8px;
+      background: #fff;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--dark-700);
+      transition: all 0.2s;
+    }
+    .account-badge-btn:hover {
+      background: var(--primary-100);
+      border-color: var(--primary-600);
+      color: var(--primary-900);
+    }
+  </style>
 </head>
 <body>
 
-  <div class="app-wrapper">
+  <!-- ============================================== -->
+  <!-- LAYAR LOGIN (Tampil jika belum login) -->
+  <!-- ============================================== -->
+  <div id="loginScreen" class="login-wrapper" style="<?= $isLoggedIn ? 'display: none;' : '' ?>">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="assets/images/logo-yanbua.png" alt="Logo Yanbu'a">
+      </div>
+      <h2 class="login-title">SISTEM MUNAQOSYAH</h2>
+      <p class="login-sub">Lajnah Muroqobah Yanbu'a Kabupaten Lampung Barat</p>
+
+      <form id="loginForm">
+        <div class="form-group" style="text-align: left;">
+          <label class="form-label">Username Pengurus</label>
+          <input type="text" id="loginUsername" class="form-control" placeholder="Masukkan username" required autocomplete="username">
+        </div>
+        <div class="form-group" style="text-align: left;">
+          <label class="form-label">Password</label>
+          <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 8px; font-weight: 700;">
+          Masuk ke Sistem RTQ →
+        </button>
+      </form>
+
+      <div class="quick-account-box">
+        <div class="quick-account-title">
+          <span>🔑</span> <span>Akun Pengurus Tersedia (Klik Cepat):</span>
+        </div>
+        <div>
+          <span class="account-badge-btn" onclick="fillLogin('Maul', 'Basenglah123.')">👑 Developer: <strong>Maul</strong></span>
+          <span class="account-badge-btn" onclick="fillLogin('Utsmaniyyah1', 'Utsmaniyyah1')">🕌 Admin: <strong>RTQ 1</strong></span>
+          <span class="account-badge-btn" onclick="fillLogin('Utsmaniyyah2', 'Utsmaniyyah2')">🕌 Admin: <strong>RTQ 2</strong></span>
+          <span class="account-badge-btn" onclick="fillLogin('Utsmaniyyah3', 'Utsmaniyyah3')">🕌 Admin: <strong>RTQ 3</strong></span>
+        </div>
+        <div style="font-size: 0.72rem; color: var(--dark-500); margin-top: 6px;">
+          * Setiap admin RTQ hanya dapat melihat dan mengelola santri RTQ-nya sendiri (terisolasi aman).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- APLIKASI UTAMA (Tampil setelah login) -->
+  <!-- ============================================== -->
+  <div class="app-wrapper" id="mainApp" style="<?= $isLoggedIn ? '' : 'display: none;' ?>">
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
@@ -43,17 +168,20 @@ $currentUser = $_SESSION['current_user'] ?? [
         <div class="sidebar-brand">
           <h2>MUNAQOSYAH</h2>
           <p id="sidebarActiveRtqLabel">Yanbu'a Lampung Barat</p>
-          <button class="btn btn-sm" onclick="openRoleModal()" style="padding: 2px 8px; font-size: 0.72rem; margin-top: 5px; background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.25); border-radius: 20px;">
-            🔄 Ganti Pengurus
-          </button>
         </div>
       </div>
 
-      <div style="padding: 12px 16px; background: rgba(0,0,0,0.15); font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
-        <div style="opacity: 0.7; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Login Pengurus:</div>
-        <div style="font-weight: 700; color: var(--gold-400);" id="currentUserBadge">
-          <?= htmlspecialchars($currentUser['nama']) ?>
+      <!-- Info Login Pengurus -->
+      <div style="padding: 12px 16px; background: rgba(0,0,0,0.18); font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="opacity: 0.7; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px;">Akun Aktif:</div>
+          <div style="font-weight: 700; color: var(--gold-400);" id="currentUserBadge">
+            <?= htmlspecialchars($currentUser['nama'] ?? '') ?>
+          </div>
         </div>
+        <button class="btn btn-danger btn-sm" onclick="handleLogout()" title="Keluar / Logout" style="padding: 4px 8px; font-size: 0.75rem;">
+          🚪 Keluar
+        </button>
       </div>
 
       <ul class="sidebar-menu">
@@ -89,14 +217,14 @@ $currentUser = $_SESSION['current_user'] ?? [
         <li class="menu-category">Konfigurasi</li>
         <li class="nav-item">
           <a class="nav-link" data-tab="tab-pengaturan">
-            <i>⚙️</i> <span>Pengaturan Multi-RTQ</span>
+            <i>⚙️</i> <span>Pengaturan Sistem</span>
           </a>
         </li>
       </ul>
 
       <div class="sidebar-footer">
         <div>Metode Yanbu'a Lampung Barat</div>
-        <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 2px;">Database MySQL Active (XAMPP)</div>
+        <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 2px;">Terisolasi Aman per Pengurus</div>
       </div>
     </aside>
 
@@ -110,6 +238,7 @@ $currentUser = $_SESSION['current_user'] ?? [
         </div>
         <div class="topbar-actions">
           <div class="topbar-filters">
+            <!-- Dropdown RTQ: Hanya aktif untuk Developer Maul, terkunci untuk Admin RTQ -->
             <select id="topbarRtqFilter" class="topbar-select" title="Pilih Unit RTQ">
               <option value="ALL">Semua RTQ (Gabungan)</option>
             </select>
@@ -136,9 +265,9 @@ $currentUser = $_SESSION['current_user'] ?? [
           <div class="hero-banner">
             <div class="hero-text">
               <h2>Lajnah Muroqobah Yanbu'a Lampung Barat</h2>
-              <p id="heroSubtitle">Sistem Terintegrasi Multi-RTQ: Pengolahan Nilai Munaqosyah, Evaluasi Ujian Akhir, dan Pencetakan Syahadah Resmi.</p>
+              <p id="heroSubtitle">Sistem Pengolahan Nilai Munaqosyah, Evaluasi Ujian Akhir, dan Pencetakan Syahadah Resmi.</p>
               <div class="hero-badge">
-                <span id="heroRtqBadge">📍 Unit: RTQ Utsmaniyyah I, II, & III</span>
+                <span id="heroRtqBadge">📍 Unit: RTQ Utsmaniyyah</span>
               </div>
             </div>
             <div class="hero-img">
@@ -416,7 +545,7 @@ $currentUser = $_SESSION['current_user'] ?? [
                   </div>
                 </div>
 
-                <div style="margin-top: 18px; text-align: right;">
+                <div style="margin-top: 18px; text-align: right;" id="btnSaveLembagaWrap">
                   <button type="submit" class="btn btn-primary">💾 Simpan Data Lembaga</button>
                 </div>
               </form>
@@ -427,9 +556,9 @@ $currentUser = $_SESSION['current_user'] ?? [
           <div class="card">
             <div class="card-header">
               <div class="card-title">
-                <i>🕌</i> <span>Manajemen Unit RTQ (3 RTQ Utsmaniyyah)</span>
+                <i>🕌</i> <span>Manajemen Unit RTQ</span>
               </div>
-              <button class="btn btn-gold btn-sm" onclick="openAddRtqModal()">➕ Tambah Unit RTQ</button>
+              <button class="btn btn-gold btn-sm" id="btnAddRtqBtn" onclick="openAddRtqModal()">➕ Tambah Unit RTQ</button>
             </div>
             <div class="card-body">
               <div class="table-responsive">
@@ -655,26 +784,13 @@ $currentUser = $_SESSION['current_user'] ?? [
     </div>
   </div>
 
-  <!-- MODAL: GANTI PENGURUS / ROLE LOGIN -->
-  <div class="modal-backdrop" id="roleModal">
-    <div class="modal-container" style="max-width: 520px;">
-      <div class="modal-header">
-        <h3 class="modal-title">Pilih Profil Pengurus / Hak Akses</h3>
-        <button class="modal-close" onclick="closeModal('roleModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="color: var(--dark-600); font-size: 0.9rem; margin-bottom: 16px;">
-          Pilih unit RTQ yang sedang Anda kelola. Data santri, penilaian munaqosyah, dan pejabat penandatangan syahadah akan otomatis terkunci sesuai RTQ yang Anda pilih:
-        </p>
-        <div style="display: flex; flex-direction: column; gap: 10px;" id="roleOptionList"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('roleModal')">Tutup</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Main JavaScript Logic -->
   <script src="assets/js/app.js"></script>
+  <script>
+    function fillLogin(u, p) {
+      document.getElementById('loginUsername').value = u;
+      document.getElementById('loginPassword').value = p;
+    }
+  </script>
 </body>
 </html>
