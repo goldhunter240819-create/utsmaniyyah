@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Penilaian Munaqosyah & Cetak Syahadah - RTQ Utsmaniyyah</title>
+  <meta name="description" content="Aplikasi Web Sistem Informasi Penilaian Munaqosyah dan Cetak Syahadah RTQ Utsmaniyyah Metode Yanbu'a Lampung Barat.">
+  
+  <!-- Google Fonts: Plus Jakarta Sans (Modern UI) & Amiri (Arabic Typography) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- SheetJS for Excel (.xlsx) Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <img src="assets/images/logo-yanbua.jpg" alt="Logo Yanbua">
+        </div>
+        <div class="sidebar-brand">
+          <h2>MUNAQOSYAH</h2>
+          <p>RTQ Utsmaniyyah III</p>
+        </div>
+      </div>
+
+      <ul class="sidebar-menu">
+        <li class="menu-category">Utama</li>
+        <li class="nav-item">
+          <a class="nav-link active" data-tab="tab-dashboard">
+            <i>📊</i> <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-tab="tab-santri">
+            <i>👥</i> <span>Data Santri</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-tab="tab-penilaian">
+            <i>📝</i> <span>Penilaian Ujian</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-tab="tab-rekap">
+            <i>🏆</i> <span>Rekap & Ranking</span>
+          </a>
+        </li>
+
+        <li class="menu-category">Dokumen & Cetak</li>
+        <li class="nav-item">
+          <a class="nav-link" data-tab="tab-cetak">
+            <i>📜</i> <span>Cetak Syahadah</span>
+          </a>
+        </li>
+
+        <li class="menu-category">Konfigurasi</li>
+        <li class="nav-item">
+          <a class="nav-link" data-tab="tab-pengaturan">
+            <i>⚙️</i> <span>Pengaturan Lembaga</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div>Metode Yanbu'a Lampung Barat</div>
+        <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 2px;">Versi Web 1.0 (Ready for GitHub)</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-title">
+          <button class="menu-toggle" id="menuToggle" aria-label="Buka Menu">☰</button>
+          <h1 id="topbarPageTitle">Dashboard Munaqosyah</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline btn-sm" onclick="exportRekapExcel()">
+            📥 <span>Export Excel</span>
+          </button>
+          <button class="btn btn-gold btn-sm" onclick="openAddSantriModal()">
+            ➕ <span>Tambah Santri</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Container -->
+      <main class="page-container">
+        
+        <!-- ============================================== -->
+        <!-- TAB 1: DASHBOARD -->
+        <!-- ============================================== -->
+        <section id="tab-dashboard" class="tab-content active">
+          <!-- Hero Banner -->
+          <div class="hero-banner">
+            <div class="hero-text">
+              <h2>Lajnah Muroqobah Yanbu'a Lampung Barat</h2>
+              <p>Sistem Pengolahan Nilai Munaqosyah, Evaluasi Ujian Akhir, dan Pencetakan Syahadah Resmi RTQ Utsmaniyyah III.</p>
+              <div class="hero-badge">
+                <span>📍 Desa Tambak Jaya, Kec. Way Tenong, Kab. Lampung Barat</span>
+              </div>
+            </div>
+            <div class="hero-img">
+              <img src="assets/images/logo-yanbua.jpg" alt="Logo Yanbu'a">
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-card primary">
+              <div class="stat-icon">👥</div>
+              <div class="stat-details">
+                <h3>Total Santri</h3>
+                <div class="stat-number" id="dashTotalSantri">0</div>
+                <div class="stat-desc">Peserta Munaqosyah</div>
+              </div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-icon">✅</div>
+              <div class="stat-details">
+                <h3>Santri Lulus</h3>
+                <div class="stat-number" id="dashLulus">0</div>
+                <div class="stat-desc">Memenuhi KKM</div>
+              </div>
+            </div>
+            <div class="stat-card danger">
+              <div class="stat-icon">⚠️</div>
+              <div class="stat-details">
+                <h3>Belum Lulus</h3>
+                <div class="stat-number" id="dashTidakLulus">0</div>
+                <div class="stat-desc">Perlu Perbaikan / Remidi</div>
+              </div>
+            </div>
+            <div class="stat-card gold">
+              <div class="stat-icon">⭐</div>
+              <div class="stat-details">
+                <h3>Rata-Rata Nilai</h3>
+                <div class="stat-number" id="dashRataRata">0</div>
+                <div class="stat-desc">Seluruh Mata Ujian</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top 3 Ranking (Podium) -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i>🏆</i> <span>Peringkat 3 Besar Santri Terbaik (Top Ranking)</span>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="switchTab('tab-rekap')">Lihat Semua Rangking →</button>
+            </div>
+            <div class="card-body">
+              <div class="podium-grid" id="dashPodium"></div>
+            </div>
+          </div>
+
+          <!-- Subject Averages Breakdown -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i>📈</i> <span>Distribusi Rata-Rata 9 Mata Ujian Munaqosyah</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="dashSubjectBars"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 2: DATA SANTRI -->
+        <!-- ============================================== -->
+        <section id="tab-santri" class="tab-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i>👥</i> <span>Daftar Santri Peserta Munaqosyah</span>
+              </div>
+              <button class="btn btn-gold btn-sm" onclick="openAddSantriModal()">
+                ➕ Tambah Santri
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="filter-toolbar">
+                <div class="search-box">
+                  <i>🔍</i>
+                  <input type="text" id="searchSantriInput" class="search-input" placeholder="Cari nama, no. induk, atau ayah...">
+                </div>
+                <div>
+                  <button class="btn btn-outline btn-sm" onclick="exportRekapExcel()">📥 Ekspor Data</button>
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table-custom">
+                  <thead>
+                    <tr>
+                      <th class="text-center" style="width: 5%;">No</th>
+                      <th style="width: 25%;">Nama & TTL</th>
+                      <th style="width: 15%;">Gender</th>
+                      <th style="width: 20%;">Orang Tua</th>
+                      <th style="width: 15%;">No Induk & Ujian</th>
+                      <th style="width: 15%;">No. Syahadah</th>
+                      <th class="text-center" style="width: 10%;">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="santriTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 3: PENILAIAN MUNAQOSYAH -->
+        <!-- ============================================== -->
+        <section id="tab-penilaian" class="tab-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i>📝</i> <span>Input & Evaluasi Nilai 9 Mata Ujian (Skala 0 - 100)</span>
+              </div>
+              <div style="font-size: 0.82rem; color: var(--dark-500);">
+                💡 Nilai otomatis tersimpan secara real-time saat diketik.
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table-custom">
+                  <thead>
+                    <tr>
+                      <th class="text-center">No</th>
+                      <th>Nama Santri</th>
+                      <th class="text-center" title="Tartil & Fashohah">Tartil</th>
+                      <th class="text-center" title="Ghoroibul Qur'an">Ghorib</th>
+                      <th class="text-center" title="Ilmu Tajwid">Tajwid</th>
+                      <th class="text-center" title="Tauhid Dasar">Tauhid</th>
+                      <th class="text-center" title="Praktik Wudlu">Wudlu</th>
+                      <th class="text-center" title="Praktik Sholat / Fasolatan">Sholat</th>
+                      <th class="text-center" title="Hafalan Surat Pendek">Surat</th>
+                      <th class="text-center" title="Hafalan Do'a Harian">Do'a</th>
+                      <th class="text-center" title="Kitabah">Kitabah</th>
+                      <th class="text-center">Total</th>
+                      <th class="text-center">Rata</th>
+                      <th class="text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="penilaianTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 4: REKAPITULASI & RANKING -->
+        <!-- ============================================== -->
+        <section id="tab-rekap" class="tab-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i>🏆</i> <span>Rekapitulasi Nilai & Peringkat Kelulusan</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-outline btn-sm" onclick="printRekapitulasiLandscape()">
+                  🖨️ Cetak Lembar Rekap (Landscape)
+                </button>
+                <button class="btn btn-success btn-sm" onclick="exportRekapExcel()">
+                  📊 Export ke Excel (.xlsx)
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table-custom">
+                  <thead>
+                    <tr>
+                      <th class="text-center">No</th>
+                      <th>Nama Santri</th>
+                      <th>Asal RTQ</th>
+                      <th class="text-center">Tartil</th>
+                      <th class="text-center">Ghorib</th>
+                      <th class="text-center">Tajwid</th>
+                      <th class="text-center">Tauhid</th>
+                      <th class="text-center">Wudlu</th>
+                      <th class="text-center">Sholat</th>
+                      <th class="text-center">Surat</th>
+                      <th class="text-center">Do'a</th>
+                      <th class="text-center">Kitabah</th>
+                      <th class="text-center">Total</th>
+                      <th class="text-center">Rata</th>
+                      <th class="text-center">Peringkat</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rekapTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 5: CETAK DOKUMEN RESMI (SYAHADAH & TRANSKRIP) -->
+        <!-- ============================================== -->
+        <section id="tab-cetak" class="tab-content">
+          <!-- Control Bar for Print Preview -->
+          <div class="card no-print">
+            <div class="card-header">
+              <div class="card-title">
+                <i>📜</i> <span>Pratinjau & Cetak Syahadah / Transkrip Nilai</span>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <select id="cetakSantriSelect" class="form-control" style="width: 260px; font-weight: 600;"></select>
+                <select id="cetakDocTypeSelect" class="form-control" style="width: 220px;">
+                  <option value="both">Halaman Depan & Belakang</option>
+                  <option value="depan">Hanya Depan (Syahadah)</option>
+                  <option value="belakang">Hanya Belakang (Transkrip)</option>
+                  <option value="formulir">Formulir Pendaftaran Ujian</option>
+                </select>
+                <button class="btn btn-gold" onclick="window.print()">
+                  🖨️ Cetak Dokumen Ini
+                </button>
+                <button class="btn btn-outline" onclick="printAllSyahadah('both')">
+                  📑 Cetak Semua Santri Sekaligus
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Render Sheet Area -->
+          <div class="print-preview-container" id="cetakPreviewArea"></div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 6: PENGATURAN LEMBAGA -->
+        <!-- ============================================== -->
+        <section id="tab-pengaturan" class="tab-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i>⚙️</i> <span>Pengaturan Data Lembaga & Parameter Munaqosyah</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <form id="configForm">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label">Nama Lembaga Pusat/Cabang</label>
+                    <input type="text" id="cfgLembaga" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Metode Pembelajaran</label>
+                    <input type="text" id="cfgMetode" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Wilayah Lembaga</label>
+                    <input type="text" id="cfgWilayah" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Nama Unit RTQ</label>
+                    <input type="text" id="cfgRtqName" class="form-control" required>
+                  </div>
+                  <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Alamat Lengkap Unit RTQ</label>
+                    <input type="text" id="cfgRtqAlamat" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">No. WhatsApp RTQ</label>
+                    <input type="text" id="cfgRtqWa" class="form-control">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Tahun Pelajaran</label>
+                    <input type="text" id="cfgTahunPelajaran" class="form-control" placeholder="Contoh: 2025 M / 1447 H" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Tanggal Ujian (Hijriyah)</label>
+                    <input type="text" id="cfgTanggalH" class="form-control" placeholder="Contoh: 14 Rabi'ul Awwal 1447 H">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Tanggal Ujian (Masehi)</label>
+                    <input type="text" id="cfgTanggalM" class="form-control" placeholder="Contoh: 07 September 2025 M">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Tanggal Terbit Syahadah</label>
+                    <input type="text" id="cfgTanggalSyahadah" class="form-control" placeholder="Contoh: 21 September 2025">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Titimangsa Transkrip Nilai</label>
+                    <input type="text" id="cfgTempatTanggal" class="form-control" placeholder="Contoh: Tambak Jaya, 07 September 2025">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Nama Kepala RTQ</label>
+                    <input type="text" id="cfgKepalaRtq" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Nama Ketua Tim Penguji</label>
+                    <input type="text" id="cfgKetuaPenguji" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Nama Ketua Panitia</label>
+                    <input type="text" id="cfgKetuaPanitia" class="form-control">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Nama Pimpinan Lajnah Muroqobah</label>
+                    <input type="text" id="cfgPimpinanLajnah" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Batas Nilai Kelulusan (KKM)</label>
+                    <input type="number" id="cfgKkm" class="form-control" min="0" max="100" required>
+                  </div>
+                </div>
+
+                <div style="margin-top: 24px; text-align: right;">
+                  <button type="submit" class="btn btn-primary">
+                    💾 Simpan Pengaturan
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Backup & Restore Data -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i>💾</i> <span>Cadangkan & Pulihkan Data (Backup & Restore)</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <p style="color: var(--dark-600); margin-bottom: 16px;">
+                Anda dapat mengunduh seluruh data santri dan penilaian ke dalam file JSON untuk cadangan, atau memulihkan data sewaktu-waktu.
+              </p>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="btn btn-outline" onclick="backupDataJson()">
+                  ⬇️ Unduh Cadangan Data (JSON)
+                </button>
+                <label class="btn btn-outline" style="cursor: pointer; margin: 0;">
+                  ⬆️ Pulihkan Data dari JSON
+                  <input type="file" accept=".json" style="display: none;" onchange="restoreDataJson(event)">
+                </label>
+                <button class="btn btn-danger btn-sm" onclick="resetToDefaultData()">
+                  🔄 Reset ke Data Asli Excel
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: TAMBAH / EDIT SANTRI -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="santriModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="santriModalTitle">Tambah Santri Baru</h3>
+        <button class="modal-close" onclick="closeModal('santriModal')">✕</button>
+      </div>
+      <form id="santriForm">
+        <div class="modal-body">
+          <input type="hidden" id="santriIdInput">
+          <div class="form-grid">
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label">Nama Lengkap Santri *</label>
+              <input type="text" id="inputNama" class="form-control" placeholder="Contoh: Ahmad Alhabib Ramadhan" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jenis Kelamin *</label>
+              <select id="inputGender" class="form-control" required>
+                <option value="L">Laki-laki (Bin)</option>
+                <option value="P">Perempuan (Binti)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Asal RTQ</label>
+              <input type="text" id="inputRtq" class="form-control" value="RTQ Utsmaniyyah III">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label">Tempat, Tanggal Lahir</label>
+              <input type="text" id="inputTtl" class="form-control" placeholder="Contoh: Tambak Jaya, 12 Agustus 2012">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nama Ayah Kandung</label>
+              <input type="text" id="inputAyah" class="form-control" placeholder="Nama ayah">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nama Ibu Kandung</label>
+              <input type="text" id="inputIbu" class="form-control" placeholder="Nama ibu">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label">Alamat Lengkap</label>
+              <input type="text" id="inputAlamat" class="form-control" placeholder="Dusun, Desa, Kecamatan, Kabupaten">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Induk Santri</label>
+              <input type="text" id="inputNoInduk" class="form-control" placeholder="0001">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Ujian</label>
+              <input type="text" id="inputNoUjian" class="form-control" placeholder="0001">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label">Nomor Syahadah</label>
+              <input type="text" id="inputNoSyahadah" class="form-control" placeholder="LMY-LB/RTQ-U3/001/09/10/2025">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('santriModal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Logic -->
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
