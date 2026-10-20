@@ -1,27 +1,31 @@
 /**
  * Sistem Informasi Penilaian Munaqosyah & Cetak Syahadah RTQ Utsmaniyyah
- * Thoriqoh Baca Tulis dan Menghafal Al-Qur'an Yanbu'a
+ * Fullstack Client-Side connected to PHP & MySQL Backend (api.php)
  */
 
-// Global State
 let appData = {
-  config: {},
+  currentUser: { id: 1, username: 'admin', nama: 'Super Admin Lajnah Pusat', role: 'SUPER_ADMIN', rtq_id: null },
+  lembaga: {},
+  daftarRtq: [],
+  daftarPeriode: [],
+  daftarUsers: [],
   santri: []
 };
 
+// 9 Mata Ujian Standar Yanbua
 const SUBJECT_KEYS = [
-  { key: 'tartil', label: 'Tartil & Fashohah' },
   { key: 'ghorib', label: 'Ghoroibul Qur\'an' },
   { key: 'tajwid', label: 'Ilmu Tajwid' },
+  { key: 'tartil', label: 'Tartil & Fashohah' },
+  { key: 'surat', label: 'Hafalan Surat Pendek' },
+  { key: 'doa', label: 'Hafalan Do\'a Harian' },
   { key: 'tauhid', label: 'Tauhid Dasar' },
   { key: 'wudlu', label: 'Praktik Wudlu' },
   { key: 'sholat', label: 'Praktik Sholat' },
-  { key: 'surat', label: 'Hafalan Surat Pendek' },
-  { key: 'doa', label: 'Hafalan Do\'a Harian' },
   { key: 'kitabah', label: 'Kitabah' }
 ];
 
-// Indonesian Number to Words Converter (Terbilang Nilai Angka)
+// Konverter Nilai Angka ke Huruf Ejaan Bahasa Indonesia
 function angkaKeTerbilang(angka) {
   if (angka === null || angka === undefined || isNaN(angka)) return '-';
   
@@ -55,81 +59,102 @@ function angkaKeTerbilang(angka) {
   return result.trim();
 }
 
-// Initialize Application
+// Inisialisasi Aplikasi
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadData();
   setupNavigation();
   setupEventListeners();
-  renderAll();
+  await loadDataFromBackend();
 });
 
-// Load Data from LocalStorage or Fallback to JSON
-async function loadData() {
-  const saved = localStorage.getItem('utsmaniyyah_munaqosyah_data');
-  if (saved) {
-    try {
-      appData = JSON.parse(saved);
-      return;
-    } catch (e) {
-      console.error('Error parsing localStorage:', e);
-    }
-  }
+// Load data dari PHP & MySQL Backend
+async function loadDataFromBackend() {
+  const rtqFilter = document.getElementById('topbarRtqFilter')?.value || 'ALL';
+  const periodeFilter = document.getElementById('topbarPeriodeFilter')?.value || 'ALL';
 
-  // Fallback: fetch from assets/data/initialData.json
   try {
-    const res = await fetch('assets/data/initialData.json');
-    if (res.ok) {
-      appData = await res.json();
-      saveData();
+    const res = await fetch(`api.php?action=get_init&rtq_id=${rtqFilter}&periode_id=${periodeFilter}`);
+    const data = await res.json();
+    if (data.status === 'success') {
+      appData = {
+        currentUser: data.currentUser,
+        lembaga: data.lembaga,
+        daftarRtq: data.daftarRtq,
+        daftarPeriode: data.daftarPeriode,
+        daftarUsers: data.daftarUsers,
+        santri: data.santri
+      };
+      renderAll();
+      updateFilterSelectors();
     }
   } catch (err) {
-    console.warn('Could not load initialData.json, using built-in defaults:', err);
-    useHardcodedFallback();
+    console.error('Error fetching data from api.php:', err);
+    alert('Gagal terhubung ke database MySQL. Pastikan XAMPP Apache dan MySQL aktif.');
   }
 }
 
-function saveData() {
-  localStorage.setItem('utsmaniyyah_munaqosyah_data', JSON.stringify(appData));
-}
+// Update Topbar Dropdown Selectors
+function updateFilterSelectors() {
+  const rtqSelect = document.getElementById('topbarRtqFilter');
+  const periodeSelect = document.getElementById('topbarPeriodeFilter');
+  const isPengurus = appData.currentUser.role === 'PENGURUS_RTQ';
 
-function useHardcodedFallback() {
-  appData = {
-    config: {
-      lembaga: "LAJNAH MUROQOBAH LEMBAGA PENDIDIKAN AL-QUR'AN",
-      metode: "THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR'AN YANBU'A",
-      wilayah: "KABUPATEN LAMPUNG BARAT",
-      tingkat: "RTQ TINGKAT DASAR",
-      rtqName: "RTQ UTSMANIYYAH III",
-      rtqAlamat: "Jl. Tirtomoyo, No.083, Margorahayu, Desa Tambak Jaya Kec, Way Tenong Kab, Lampung Barat",
-      rtqWa: "082184427288",
-      tahunPelajaran: "2025 M / 1447 H",
-      tanggalMunaqosyahH: "14 Rabi'ul Awwal 1447 H",
-      tanggalMunaqosyahM: "07 September 2025 M",
-      tanggalSyahadah: "21 September 2025",
-      tempatTanggal: "Tambak Jaya, 07 September 2025",
-      kepalaRtq: "ABU HANIFAN",
-      ketuaPenguji: "IKHWANUL KIROM",
-      ketuaPanitia: "A. Muslih Abdurrahman",
-      pimpinanLajnah: "SYA'BUL MUBAROK",
-      kkm: 65
-    },
-    santri: []
-  };
-  saveData();
+  if (rtqSelect) {
+    const currentVal = rtqSelect.value;
+    rtqSelect.innerHTML = isPengurus ? '' : '<option value="ALL">Semua Unit RTQ (Gabungan)</option>';
+    
+    appData.daftarRtq.forEach(r => {
+      if (isPengurus && r.id != appData.currentUser.rtq_id) return;
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = `${r.kode} - ${r.nama}`;
+      rtqSelect.appendChild(opt);
+    });
+
+    if (isPengurus) {
+      rtqSelect.value = appData.currentUser.rtq_id;
+      rtqSelect.disabled = true;
+    } else if (currentVal) {
+      rtqSelect.value = currentVal;
+    }
+  }
+
+  if (periodeSelect) {
+    const currentVal = periodeSelect.value;
+    periodeSelect.innerHTML = '<option value="ALL">Semua Periode Ujian</option>';
+    appData.daftarPeriode.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.tahun_pelajaran;
+      periodeSelect.appendChild(opt);
+    });
+    if (currentVal) periodeSelect.value = currentVal;
+  }
+
+  // Update current user badge in sidebar
+  const userBadge = document.getElementById('currentUserBadge');
+  if (userBadge) {
+    userBadge.textContent = appData.currentUser.nama;
+  }
+  const sidebarRtqLabel = document.getElementById('sidebarActiveRtqLabel');
+  if (sidebarRtqLabel) {
+    if (isPengurus) {
+      const myRtq = appData.daftarRtq.find(r => r.id == appData.currentUser.rtq_id);
+      sidebarRtqLabel.textContent = myRtq ? myRtq.nama : 'Pengurus RTQ';
+    } else {
+      sidebarRtqLabel.textContent = 'Semua RTQ (Super Admin)';
+    }
+  }
 }
 
 // Navigation Handling
 function setupNavigation() {
-  const navLinks = document.querySelectorAll('.nav-link[data-tab]');
-  navLinks.forEach(link => {
+  document.querySelectorAll('.nav-link[data-tab]').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      const tabId = link.getAttribute('data-tab');
-      switchTab(tabId);
+      switchTab(link.getAttribute('data-tab'));
     });
   });
 
-  // Mobile menu toggle
   const menuToggle = document.getElementById('menuToggle');
   const sidebar = document.getElementById('sidebar');
   if (menuToggle && sidebar) {
@@ -140,99 +165,87 @@ function setupNavigation() {
 }
 
 function switchTab(tabId) {
-  // Update nav links
   document.querySelectorAll('.nav-link[data-tab]').forEach(el => {
     el.classList.toggle('active', el.getAttribute('data-tab') === tabId);
   });
-
-  // Update tabs
   document.querySelectorAll('.tab-content').forEach(el => {
     el.classList.remove('active');
   });
 
-  const activeTab = document.getElementById(tabId);
-  if (activeTab) {
-    activeTab.classList.add('active');
-  }
+  const target = document.getElementById(tabId);
+  if (target) target.classList.add('active');
 
-  // Update topbar title
   const titles = {
     'tab-dashboard': 'Dashboard Munaqosyah',
     'tab-santri': 'Data Santri Peserta Ujian',
     'tab-penilaian': 'Input & Edit Nilai Munaqosyah',
     'tab-rekap': 'Rekapitulasi Nilai & Rangking',
     'tab-cetak': 'Cetak Dokumen Resmi (Syahadah & Transkrip)',
-    'tab-pengaturan': 'Pengaturan Lembaga & Sistem'
+    'tab-pengaturan': 'Pengaturan Multi-RTQ & Sistem'
   };
-  const topbarTitle = document.getElementById('topbarPageTitle');
-  if (topbarTitle && titles[tabId]) {
-    topbarTitle.textContent = titles[tabId];
-  }
+  const titleEl = document.getElementById('topbarPageTitle');
+  if (titleEl && titles[tabId]) titleEl.textContent = titles[tabId];
 
-  // Re-render specific tab
   if (tabId === 'tab-dashboard') renderDashboard();
   if (tabId === 'tab-santri') renderSantriTable();
   if (tabId === 'tab-penilaian') renderPenilaianTable();
   if (tabId === 'tab-rekap') renderRekapTable();
   if (tabId === 'tab-cetak') setupCetakTab();
-  if (tabId === 'tab-pengaturan') populateConfigForm();
+  if (tabId === 'tab-pengaturan') populateConfigTab();
 
-  // Close sidebar on mobile
-  const sidebar = document.getElementById('sidebar');
-  if (sidebar && window.innerWidth <= 992) {
-    sidebar.classList.remove('show');
-  }
+  if (sidebar && window.innerWidth <= 992) sidebar.classList.remove('show');
 }
 
-// Calculations: Total, Average, Ranks, Pass Status
+// Calculate Stats & Ranks
 function calculateSantriStats() {
-  const kkm = Number(appData.config.kkm) || 65;
+  const kkm = parseFloat(appData.lembaga.kkm) || 60;
   const list = appData.santri.map(s => {
-    let total = 0;
-    let count = 0;
-    SUBJECT_KEYS.forEach(sub => {
-      const val = Number(s.scores?.[sub.key]) || 0;
-      total += val;
-      count++;
-    });
-    const avg = count > 0 ? (total / count) : 0;
-    const isLulus = avg >= kkm;
+    const ghorib = parseFloat(s.ghorib) || 0;
+    const tajwid = parseFloat(s.tajwid) || 0;
+    const tartil = parseFloat(s.tartil) || 0;
+    const surat = parseFloat(s.surat) || 0;
+    const doa = parseFloat(s.doa) || 0;
+    const tauhid = parseFloat(s.tauhid) || 0;
+    const wudlu = parseFloat(s.wudlu) || 0;
+    const sholat = parseFloat(s.sholat) || 0;
+    const kitabah = parseFloat(s.kitabah) || 0;
+
+    const total = parseFloat((ghorib + tajwid + tartil + surat + doa + tauhid + wudlu + sholat + kitabah).toFixed(2));
+    const avg = parseFloat((total / 9).toFixed(2));
+    const isLulus = total >= kkm;
 
     return {
       ...s,
-      totalNilai: Number(total.toFixed(2)),
-      rataRata: Number(avg.toFixed(2)),
+      ghorib, tajwid, tartil, surat, doa, tauhid, wudlu, sholat, kitabah,
+      totalNilai: total,
+      rataRata: avg,
       isLulus
     };
   });
 
-  // Sort descending by total score to calculate ranks
   const sorted = [...list].sort((a, b) => b.totalNilai - a.totalNilai);
-  let currentRank = 1;
+  let rank = 1;
   sorted.forEach((item, index) => {
     if (index > 0 && item.totalNilai < sorted[index - 1].totalNilai) {
-      currentRank = index + 1;
+      rank = index + 1;
     }
-    item.rank = currentRank;
+    item.rank = rank;
   });
 
-  // Map back rank to original order
   const rankMap = new Map(sorted.map(s => [s.id, s.rank]));
-  list.forEach(s => {
-    s.rank = rankMap.get(s.id);
-  });
+  list.forEach(s => { s.rank = rankMap.get(s.id); });
 
   return { list, sorted };
 }
 
-// Master Render
+// Render Master
 function renderAll() {
   renderDashboard();
   renderSantriTable();
   renderPenilaianTable();
   renderRekapTable();
   setupCetakTab();
-  populateConfigForm();
+  populateConfigTab();
 }
 
 // ==========================================
@@ -240,29 +253,24 @@ function renderAll() {
 // ==========================================
 function renderDashboard() {
   const { list, sorted } = calculateSantriStats();
-  const totalSantri = list.length;
-  const lulusCount = list.filter(s => s.isLulus).length;
-  const tidakLulusCount = totalSantri - lulusCount;
-  
-  const totalAllAvg = list.reduce((acc, curr) => acc + curr.rataRata, 0);
-  const avgOverall = totalSantri > 0 ? (totalAllAvg / totalAllAvg.length || totalAllAvg / totalSantri).toFixed(1) : 0;
-  const topScore = sorted.length > 0 ? sorted[0].totalNilai : 0;
+  const total = list.length;
+  const lulus = list.filter(s => s.isLulus).length;
+  const tidakLulus = total - lulus;
+  const avgOverall = total > 0 ? (list.reduce((acc, curr) => acc + curr.rataRata, 0) / total).toFixed(1) : 0;
 
-  // Stat Counters
-  document.getElementById('dashTotalSantri').textContent = totalSantri;
-  document.getElementById('dashLulus').textContent = lulusCount;
-  document.getElementById('dashTidakLulus').textContent = tidakLulusCount;
+  document.getElementById('dashTotalSantri').textContent = total;
+  document.getElementById('dashLulus').textContent = lulus;
+  document.getElementById('dashTidakLulus').textContent = tidakLulus;
   document.getElementById('dashRataRata').textContent = avgOverall;
 
-  // Podium (Top 3)
-  const podiumContainer = document.getElementById('dashPodium');
-  if (podiumContainer) {
+  // Podium
+  const podium = document.getElementById('dashPodium');
+  if (podium) {
     if (sorted.length === 0) {
-      podiumContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--dark-500); padding: 20px;">Belum ada data santri</div>';
+      podium.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--dark-500); padding: 20px;">Belum ada data santri</div>';
     } else {
       let html = '';
-      const top3 = sorted.slice(0, 3);
-      top3.forEach((s, idx) => {
+      sorted.slice(0, 3).forEach((s, idx) => {
         const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : 'rank-3';
         const rankLabel = idx === 0 ? 'Juara 1' : idx === 1 ? 'Juara 2' : 'Juara 3';
         const badgeIcon = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
@@ -271,33 +279,31 @@ function renderDashboard() {
             <div class="podium-badge">${badgeIcon}</div>
             <div class="badge ${idx === 0 ? 'badge-gold' : 'badge-primary'}" style="margin-bottom: 8px;">${rankLabel}</div>
             <h4 class="podium-name">${escapeHtml(s.nama)}</h4>
-            <div class="podium-info">No. Ujian: ${escapeHtml(s.noUjian || '-')} | RTQ: ${escapeHtml(s.rtq || '-')}</div>
+            <div class="podium-info">${escapeHtml(s.rtq_nama || '-')} | No. Ujian: ${escapeHtml(s.no_ujian || '-')}</div>
             <div class="podium-score">${s.totalNilai}</div>
             <div style="font-size: 0.75rem; color: var(--dark-500);">Rata-rata: ${s.rataRata} (${s.isLulus ? 'Lulus' : 'Belum Lulus'})</div>
           </div>
         `;
       });
-      podiumContainer.innerHTML = html;
+      podium.innerHTML = html;
     }
   }
 
-  // Subject Averages Breakdown Bar
-  const subjectBars = document.getElementById('dashSubjectBars');
-  if (subjectBars) {
-    let barsHtml = '';
+  // Subject Bars
+  const bars = document.getElementById('dashSubjectBars');
+  if (bars) {
+    let html = '';
     SUBJECT_KEYS.forEach(sub => {
-      let subTotal = 0;
-      list.forEach(s => {
-        subTotal += Number(s.scores?.[sub.key]) || 0;
-      });
-      const subAvg = totalSantri > 0 ? (subTotal / totalSantri).toFixed(1) : 0;
-      const pct = Math.min(100, Math.max(0, (subAvg / 100) * 100));
+      let subTot = 0;
+      list.forEach(s => { subTot += s[sub.key] || 0; });
+      const subAvg = total > 0 ? (subTot / total).toFixed(1) : 0;
+      const pct = Math.min(100, Math.max(0, (subAvg / 10) * 100));
 
-      barsHtml += `
+      html += `
         <div style="margin-bottom: 14px;">
           <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">
             <span>${sub.label}</span>
-            <span style="color: var(--primary-700);">${subAvg}</span>
+            <span style="color: var(--primary-700);">${subAvg} / 10</span>
           </div>
           <div style="height: 9px; background: var(--gray-200); border-radius: 10px; overflow: hidden;">
             <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, var(--primary-600), var(--gold-500)); border-radius: 10px; transition: width 0.5s ease;"></div>
@@ -305,7 +311,7 @@ function renderDashboard() {
         </div>
       `;
     });
-    subjectBars.innerHTML = barsHtml;
+    bars.innerHTML = html;
   }
 }
 
@@ -316,56 +322,45 @@ function renderSantriTable() {
   const tbody = document.getElementById('santriTableBody');
   if (!tbody) return;
 
-  const searchQuery = (document.getElementById('searchSantriInput')?.value || '').toLowerCase();
+  const q = (document.getElementById('searchSantriInput')?.value || '').toLowerCase();
   const filtered = appData.santri.filter(s => {
-    return (
-      (s.nama || '').toLowerCase().includes(searchQuery) ||
-      (s.noInduk || '').toLowerCase().includes(searchQuery) ||
-      (s.noUjian || '').toLowerCase().includes(searchQuery) ||
-      (s.ayah || '').toLowerCase().includes(searchQuery)
-    );
+    return (s.nama || '').toLowerCase().includes(q) ||
+           (s.no_induk || '').toLowerCase().includes(q) ||
+           (s.no_ujian || '').toLowerCase().includes(q) ||
+           (s.rtq_nama || '').toLowerCase().includes(q);
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center" style="padding: 30px; color: var(--dark-500);">Tidak ada data santri ditemukan.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding: 30px; color: var(--dark-500);">Tidak ada data santri ditemukan.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filtered.map((s, index) => {
-    const genderBadge = s.gender === 'L' ? '<span class="badge badge-primary">Laki-laki (Bin)</span>' : '<span class="badge badge-gold">Perempuan (Binti)</span>';
+  tbody.innerHTML = filtered.map((s, idx) => {
+    const genderBadge = s.gender === 'L' ? '<span class="badge badge-primary">L (Bin)</span>' : '<span class="badge badge-gold">P (Binti)</span>';
     return `
       <tr>
-        <td class="text-center font-bold">${index + 1}</td>
+        <td class="text-center font-bold">${idx + 1}</td>
         <td>
           <strong style="color: var(--primary-900); font-size: 0.95rem;">${escapeHtml(s.nama)}</strong>
           <div style="font-size: 0.78rem; color: var(--dark-500);">${escapeHtml(s.ttl || '-')}</div>
         </td>
+        <td>
+          <span class="badge badge-primary" style="font-size: 0.75rem;">${escapeHtml(s.rtq_kode || s.rtq_nama || '-')}</span>
+        </td>
         <td>${genderBadge}</td>
         <td>
-          <div>Ayah: <strong>${escapeHtml(s.ayah || '-')}</strong></div>
-          <div style="font-size: 0.78rem; color: var(--dark-500);">Ibu: ${escapeHtml(s.ibu || '-')}</div>
+          <div>Induk: <code>${escapeHtml(s.no_induk || '-')}</code></div>
+          <div>Ujian: <code>${escapeHtml(s.no_ujian || '-')}</code></div>
         </td>
         <td>
-          <div>No. Induk: <code>${escapeHtml(s.noInduk || '-')}</code></div>
-          <div style="font-size: 0.78rem;">No. Ujian: <code>${escapeHtml(s.noUjian || '-')}</code></div>
-        </td>
-        <td>
-          <div style="font-size: 0.8rem; font-family: monospace; color: var(--primary-800);">${escapeHtml(s.noSyahadah || '-')}</div>
+          <div style="font-size: 0.8rem; font-family: monospace; color: var(--primary-800);">${escapeHtml(s.no_syahadah || '-')}</div>
         </td>
         <td class="text-center">
           <div style="display: flex; gap: 6px; justify-content: center;">
-            <button class="btn btn-outline btn-sm btn-icon" title="Edit Santri" onclick="openEditSantriModal(${s.id})">
-              ✏️
-            </button>
-            <button class="btn btn-outline btn-sm btn-icon" title="Cetak Syahadah Depan" onclick="previewSingleCetak(${s.id}, 'depan')">
-              📜
-            </button>
-            <button class="btn btn-outline btn-sm btn-icon" title="Cetak Transkrip Belakang" onclick="previewSingleCetak(${s.id}, 'belakang')">
-              📋
-            </button>
-            <button class="btn btn-danger btn-sm btn-icon" title="Hapus" onclick="confirmDeleteSantri(${s.id})">
-              🗑️
-            </button>
+            <button class="btn btn-outline btn-sm btn-icon" title="Edit Santri" onclick="openEditSantriModal(${s.id})">✏️</button>
+            <button class="btn btn-outline btn-sm btn-icon" title="Cetak Syahadah Depan" onclick="previewSingleCetak(${s.id}, 'depan')">📜</button>
+            <button class="btn btn-outline btn-sm btn-icon" title="Cetak Transkrip Belakang" onclick="previewSingleCetak(${s.id}, 'belakang')">📋</button>
+            <button class="btn btn-danger btn-sm btn-icon" title="Hapus" onclick="confirmDeleteSantri(${s.id})">🗑️</button>
           </div>
         </td>
       </tr>
@@ -373,115 +368,142 @@ function renderSantriTable() {
   }).join('');
 }
 
-// Modal Tambah / Edit Santri
+// Modal Santri Form
 function openAddSantriModal() {
   document.getElementById('santriModalTitle').textContent = 'Tambah Santri Baru';
   document.getElementById('santriForm').reset();
   document.getElementById('santriIdInput').value = '';
-  
-  // Auto generate next No Syahadah & No Ujian
+
+  // Isi dropdown RTQ
+  const rtqSelect = document.getElementById('inputRtq');
+  rtqSelect.innerHTML = '';
+  appData.daftarRtq.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = `${r.kode} - ${r.nama}`;
+    rtqSelect.appendChild(opt);
+  });
+  if (appData.currentUser.role === 'PENGURUS_RTQ') {
+    rtqSelect.value = appData.currentUser.rtq_id;
+  }
+
+  // Isi dropdown Periode
+  const periodeSelect = document.getElementById('inputPeriode');
+  periodeSelect.innerHTML = '';
+  appData.daftarPeriode.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.tahun_pelajaran;
+    periodeSelect.appendChild(opt);
+  });
+
+  // Nomor auto-generate
   const nextNo = (appData.santri.length + 1).toString().padStart(4, '0');
-  const shortNum = (appData.santri.length + 1).toString().padStart(3, '0');
+  const shortNo = (appData.santri.length + 1).toString().padStart(3, '0');
   document.getElementById('inputNoInduk').value = nextNo;
   document.getElementById('inputNoUjian').value = nextNo;
-  document.getElementById('inputNoSyahadah').value = `LMY-LB/RTQ-U3/${shortNum}/09/10/2025`;
-  document.getElementById('inputRtq').value = appData.config.rtqName || 'RTQ Utsmaniyyah III';
+  document.getElementById('inputNoSyahadah').value = `LMY-LB/RTQ-U3/${shortNo}/09/10/2025`;
 
   openModal('santriModal');
 }
 
 function openEditSantriModal(id) {
-  const s = appData.santri.find(x => x.id === id);
+  const s = appData.santri.find(x => x.id == id);
   if (!s) return;
 
   document.getElementById('santriModalTitle').textContent = 'Edit Data Santri';
   document.getElementById('santriIdInput').value = s.id;
   document.getElementById('inputNama').value = s.nama || '';
-  document.getElementById('inputRtq').value = s.rtq || appData.config.rtqName;
   document.getElementById('inputGender').value = s.gender || 'L';
   document.getElementById('inputTtl').value = s.ttl || '';
   document.getElementById('inputAyah').value = s.ayah || '';
   document.getElementById('inputIbu').value = s.ibu || '';
   document.getElementById('inputAlamat').value = s.alamat || '';
-  document.getElementById('inputNoInduk').value = s.noInduk || '';
-  document.getElementById('inputNoUjian').value = s.noUjian || '';
-  document.getElementById('inputNoSyahadah').value = s.noSyahadah || '';
+  document.getElementById('inputNoInduk').value = s.no_induk || '';
+  document.getElementById('inputNoUjian').value = s.no_ujian || '';
+  document.getElementById('inputNoSyahadah').value = s.no_syahadah || '';
+
+  const rtqSelect = document.getElementById('inputRtq');
+  rtqSelect.innerHTML = '';
+  appData.daftarRtq.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = `${r.kode} - ${r.nama}`;
+    rtqSelect.appendChild(opt);
+  });
+  rtqSelect.value = s.rtq_id;
+
+  const periodeSelect = document.getElementById('inputPeriode');
+  periodeSelect.innerHTML = '';
+  appData.daftarPeriode.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.tahun_pelajaran;
+    periodeSelect.appendChild(opt);
+  });
+  periodeSelect.value = s.periode_id;
 
   openModal('santriModal');
 }
 
-function handleSaveSantri(e) {
+async function handleSaveSantri(e) {
   e.preventDefault();
-  const idVal = document.getElementById('santriIdInput').value;
-  const isEdit = Boolean(idVal);
-
-  const santriData = {
+  const id = document.getElementById('santriIdInput').value;
+  const payload = {
+    id: id || null,
     nama: document.getElementById('inputNama').value.trim(),
-    rtq: document.getElementById('inputRtq').value.trim(),
     gender: document.getElementById('inputGender').value,
+    rtq_id: document.getElementById('inputRtq').value,
+    periode_id: document.getElementById('inputPeriode').value,
     ttl: document.getElementById('inputTtl').value.trim(),
     ayah: document.getElementById('inputAyah').value.trim(),
     ibu: document.getElementById('inputIbu').value.trim(),
     alamat: document.getElementById('inputAlamat').value.trim(),
-    noInduk: document.getElementById('inputNoInduk').value.trim(),
-    noUjian: document.getElementById('inputNoUjian').value.trim(),
-    noSyahadah: document.getElementById('inputNoSyahadah').value.trim()
+    no_induk: document.getElementById('inputNoInduk').value.trim(),
+    no_ujian: document.getElementById('inputNoUjian').value.trim(),
+    no_syahadah: document.getElementById('inputNoSyahadah').value.trim()
   };
 
-  if (!santriData.nama) {
-    alert('Nama santri wajib diisi!');
-    return;
-  }
-
-  if (isEdit) {
-    const id = parseInt(idVal, 10);
-    const index = appData.santri.findIndex(x => x.id === id);
-    if (index !== -1) {
-      appData.santri[index] = {
-        ...appData.santri[index],
-        ...santriData
-      };
-    }
-  } else {
-    const newId = appData.santri.length > 0 ? Math.max(...appData.santri.map(x => x.id)) + 1 : 1;
-    appData.santri.push({
-      id: newId,
-      no: appData.santri.length + 1,
-      ...santriData,
-      scores: {
-        tartil: 0,
-        ghorib: 0,
-        tajwid: 0,
-        tauhid: 0,
-        wudlu: 0,
-        sholat: 0,
-        surat: 0,
-        doa: 0,
-        kitabah: 0
-      }
+  try {
+    const res = await fetch('api.php?action=save_santri', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
+    const result = await res.json();
+    if (result.status === 'success') {
+      closeModal('santriModal');
+      await loadDataFromBackend();
+    } else {
+      alert(result.message || 'Gagal menyimpan santri');
+    }
+  } catch (err) {
+    alert('Terjadi kesalahan saat menyimpan ke database MySQL.');
   }
-
-  saveData();
-  closeModal('santriModal');
-  renderSantriTable();
-  renderPenilaianTable();
-  renderRekapTable();
-  renderDashboard();
 }
 
-function confirmDeleteSantri(id) {
-  const s = appData.santri.find(x => x.id === id);
+async function confirmDeleteSantri(id) {
+  const s = appData.santri.find(x => x.id == id);
   if (!s) return;
-  if (confirm(`Yakin ingin menghapus santri "${s.nama}"? Data nilai yang sudah diinput juga akan terhapus.`)) {
-    appData.santri = appData.santri.filter(x => x.id !== id);
-    saveData();
-    renderAll();
+  if (confirm(`Yakin ingin menghapus santri "${s.nama}" dari database MySQL? Nilai ujiannya juga akan terhapus permanen.`)) {
+    try {
+      const res = await fetch('api.php?action=delete_santri', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        await loadDataFromBackend();
+      }
+    } catch (err) {
+      alert('Gagal menghapus data dari database.');
+    }
   }
 }
 
 // ==========================================
-// 3. PENILAIAN MUNAQOSYAH (INPUT NILAI)
+// 3. PENILAIAN MUNAQOSYAH (LIVE MYSQL UPDATE)
 // ==========================================
 function renderPenilaianTable() {
   const tbody = document.getElementById('penilaianTableBody');
@@ -493,42 +515,42 @@ function renderPenilaianTable() {
     return;
   }
 
-  tbody.innerHTML = list.map((s, index) => {
+  tbody.innerHTML = list.map((s, idx) => {
     return `
       <tr data-santri-id="${s.id}">
-        <td class="text-center font-bold">${index + 1}</td>
+        <td class="text-center font-bold">${idx + 1}</td>
         <td>
           <div style="font-weight: 700; color: var(--dark-900);">${escapeHtml(s.nama)}</div>
-          <div style="font-size: 0.75rem; color: var(--dark-500);">No. Ujian: ${escapeHtml(s.noUjian || '-')}</div>
+          <div style="font-size: 0.75rem; color: var(--dark-500);">${escapeHtml(s.rtq_kode || s.rtq_nama)} | No. Ujian: ${escapeHtml(s.no_ujian || '-')}</div>
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.tartil ?? 0}" onchange="updateScore(${s.id}, 'tartil', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.ghorib}" onchange="updateLiveScore(${s.id}, 'ghorib', this.value)" />
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.ghorib ?? 0}" onchange="updateScore(${s.id}, 'ghorib', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.tajwid}" onchange="updateLiveScore(${s.id}, 'tajwid', this.value)" />
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.tajwid ?? 0}" onchange="updateScore(${s.id}, 'tajwid', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.tartil}" onchange="updateLiveScore(${s.id}, 'tartil', this.value)" />
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.tauhid ?? 0}" onchange="updateScore(${s.id}, 'tauhid', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.surat}" onchange="updateLiveScore(${s.id}, 'surat', this.value)" />
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.wudlu ?? 0}" onchange="updateScore(${s.id}, 'wudlu', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.doa}" onchange="updateLiveScore(${s.id}, 'doa', this.value)" />
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.sholat ?? 0}" onchange="updateScore(${s.id}, 'sholat', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.tauhid}" onchange="updateLiveScore(${s.id}, 'tauhid', this.value)" />
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.surat ?? 0}" onchange="updateScore(${s.id}, 'surat', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.wudlu}" onchange="updateLiveScore(${s.id}, 'wudlu', this.value)" />
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.doa ?? 0}" onchange="updateScore(${s.id}, 'doa', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.sholat}" onchange="updateLiveScore(${s.id}, 'sholat', this.value)" />
         </td>
         <td class="text-center">
-          <input type="number" step="0.5" min="0" max="100" class="score-input" value="${s.scores?.kitabah ?? 0}" onchange="updateScore(${s.id}, 'kitabah', this.value)" />
+          <input type="number" step="0.1" min="0" max="100" class="score-input" value="${s.kitabah}" onchange="updateLiveScore(${s.id}, 'kitabah', this.value)" />
         </td>
-        <td class="text-center font-bold" style="color: var(--primary-800); font-size: 0.95rem;">
+        <td class="text-center font-bold" style="color: var(--primary-900); font-size: 0.95rem;">
           ${s.totalNilai}
         </td>
         <td class="text-center font-bold">
@@ -542,22 +564,36 @@ function renderPenilaianTable() {
   }).join('');
 }
 
-function updateScore(santriId, subjectKey, val) {
-  const s = appData.santri.find(x => x.id === santriId);
-  if (!s) return;
-  if (!s.scores) s.scores = {};
-  
+async function updateLiveScore(santriId, subject, val) {
   let numVal = parseFloat(val);
   if (isNaN(numVal) || numVal < 0) numVal = 0;
-  if (numVal > 100) numVal = 100;
-  
-  s.scores[subjectKey] = numVal;
-  saveData();
-  
-  // Re-calculate and update tables
-  renderPenilaianTable();
-  renderRekapTable();
-  renderDashboard();
+
+  try {
+    const res = await fetch('api.php?action=update_nilai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        santri_id: santriId,
+        subject: subject,
+        value: numVal
+      })
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      const s = appData.santri.find(x => x.id == santriId);
+      if (s) {
+        s[subject] = numVal;
+        s.total = result.total;
+        s.rata_rata = result.rata_rata;
+        s.is_lulus = result.is_lulus;
+      }
+      renderPenilaianTable();
+      renderRekapTable();
+      renderDashboard();
+    }
+  } catch (err) {
+    console.error('Error saving score to database:', err);
+  }
 }
 
 // ==========================================
@@ -573,22 +609,22 @@ function renderRekapTable() {
     return;
   }
 
-  tbody.innerHTML = sorted.map((s, index) => {
+  tbody.innerHTML = sorted.map((s, idx) => {
     const rankBadge = s.rank === 1 ? '🥇 1' : s.rank === 2 ? '🥈 2' : s.rank === 3 ? '🥉 3' : s.rank;
     return `
       <tr>
-        <td class="text-center font-bold">${index + 1}</td>
+        <td class="text-center font-bold">${idx + 1}</td>
         <td><strong>${escapeHtml(s.nama)}</strong></td>
-        <td>${escapeHtml(s.rtq || '-')}</td>
-        <td class="text-center">${s.scores?.tartil ?? 0}</td>
-        <td class="text-center">${s.scores?.ghorib ?? 0}</td>
-        <td class="text-center">${s.scores?.tajwid ?? 0}</td>
-        <td class="text-center">${s.scores?.tauhid ?? 0}</td>
-        <td class="text-center">${s.scores?.wudlu ?? 0}</td>
-        <td class="text-center">${s.scores?.sholat ?? 0}</td>
-        <td class="text-center">${s.scores?.surat ?? 0}</td>
-        <td class="text-center">${s.scores?.doa ?? 0}</td>
-        <td class="text-center">${s.scores?.kitabah ?? 0}</td>
+        <td>${escapeHtml(s.rtq_nama || '-')}</td>
+        <td class="text-center">${s.ghorib}</td>
+        <td class="text-center">${s.tajwid}</td>
+        <td class="text-center">${s.tartil}</td>
+        <td class="text-center">${s.surat}</td>
+        <td class="text-center">${s.doa}</td>
+        <td class="text-center">${s.tauhid}</td>
+        <td class="text-center">${s.wudlu}</td>
+        <td class="text-center">${s.sholat}</td>
+        <td class="text-center">${s.kitabah}</td>
         <td class="text-center font-bold" style="color: var(--primary-900); font-size: 1rem;">${s.totalNilai}</td>
         <td class="text-center font-bold">${s.rataRata}</td>
         <td class="text-center">
@@ -599,74 +635,155 @@ function renderRekapTable() {
   }).join('');
 }
 
-// Export Rekap to Excel (.xlsx) using SheetJS
+// Export Rekap to Excel
 function exportRekapExcel() {
   if (typeof XLSX === 'undefined') {
-    alert('SheetJS belum siap. Membuka opsi export CSV...');
-    exportRekapCSV();
+    alert('SheetJS belum siap.');
     return;
   }
 
   const { sorted } = calculateSantriStats();
   const dataRows = sorted.map((s, idx) => ({
     'No': idx + 1,
-    'No Ujian': s.noUjian || '',
+    'No Ujian': s.no_ujian || '',
     'Nama Santri': s.nama || '',
-    'Asal RTQ': s.rtq || '',
-    'Tartil & Fashohah': s.scores?.tartil ?? 0,
-    'Ghoroibul Quran': s.scores?.ghorib ?? 0,
-    'Ilmu Tajwid': s.scores?.tajwid ?? 0,
-    'Tauhid Dasar': s.scores?.tauhid ?? 0,
-    'Praktik Wudlu': s.scores?.wudlu ?? 0,
-    'Praktik Sholat': s.scores?.sholat ?? 0,
-    'Hafalan Surat Pendek': s.scores?.surat ?? 0,
-    'Hafalan Doa Harian': s.scores?.doa ?? 0,
-    'Kitabah': s.scores?.kitabah ?? 0,
+    'Asal Unit RTQ': s.rtq_nama || '',
+    'Tahun Pelajaran': s.tahun_pelajaran || '',
+    'Ghoroibul Quran': s.ghorib,
+    'Ilmu Tajwid': s.tajwid,
+    'Tartil & Fashohah': s.tartil,
+    'Hafalan Surat Pendek': s.surat,
+    'Hafalan Doa Harian': s.doa,
+    'Tauhid Dasar': s.tauhid,
+    'Praktik Wudlu': s.wudlu,
+    'Praktik Sholat': s.sholat,
+    'Kitabah': s.kitabah,
     'Total Nilai': s.totalNilai,
     'Rata-Rata': s.rataRata,
     'Peringkat': s.rank,
-    'Keterangan': s.isLulus ? 'LULUS' : 'TIDAK LULUS'
+    'Status': s.isLulus ? 'LULUS' : 'TIDAK LULUS'
   }));
 
   const ws = XLSX.utils.json_to_sheet(dataRows);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai Munaqosyah");
-  XLSX.writeFile(wb, `Rekap_Munaqosyah_${(appData.config.rtqName || 'RTQ').replace(/\s+/g, '_')}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, "Rekap Munaqosyah");
+  XLSX.writeFile(wb, `Rekap_Munaqosyah_Yanbua_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-function exportRekapCSV() {
+// Print Rekapitulasi Landscape
+function printRekapitulasiLandscape() {
   const { sorted } = calculateSantriStats();
-  let csv = 'No,No Ujian,Nama,Asal RTQ,Tartil,Ghorib,Tajwid,Tauhid,Wudlu,Sholat,Surat,Doa,Kitabah,Total,Rata-rata,Peringkat,Keterangan\n';
-  sorted.forEach((s, idx) => {
-    csv += `"${idx + 1}","${s.noUjian || ''}","${s.nama || ''}","${s.rtq || ''}",${s.scores?.tartil || 0},${s.scores?.ghorib || 0},${s.scores?.tajwid || 0},${s.scores?.tauhid || 0},${s.scores?.wudlu || 0},${s.scores?.sholat || 0},${s.scores?.surat || 0},${s.scores?.doa || 0},${s.scores?.kitabah || 0},${s.totalNilai},${s.rataRata},${s.rank},"${s.isLulus ? 'LULUS' : 'TIDAK LULUS'}"\n`;
-  });
+  const lbg = appData.lembaga;
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'rekap_nilai_munaqosyah.csv';
-  a.click();
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="UTF-8">
+      <title>Rekapitulasi Nilai Munaqosyah - Yanbu'a Lampung Barat</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #111; }
+        .header { text-align: center; margin-bottom: 16px; }
+        .header h2 { margin: 0 0 4px; font-size: 15pt; text-transform: uppercase; }
+        .header h3 { margin: 0; font-size: 11pt; font-weight: normal; }
+        table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 14px; }
+        th, td { border: 1px solid #333; padding: 5px 6px; }
+        th { background: #eef4f0; text-align: center; }
+        td.center { text-align: center; }
+        td.bold { font-weight: bold; }
+        .footer { display: flex; justify-content: flex-end; margin-top: 25px; font-size: 10pt; }
+        .sig { text-align: center; width: 220px; }
+        @page { size: A4 landscape; margin: 10mm; }
+        @media print { .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="no-print" style="margin-bottom: 15px; text-align: right;">
+        <button onclick="window.print()" style="padding: 8px 18px; font-size: 11pt; cursor: pointer; background: #0f5132; color: #fff; border: none; border-radius: 4px;">🖨️ Cetak Dokumen</button>
+      </div>
+      <div class="header">
+        <h2>DAFTAR NILAI UJIAN AKHIR MUNAQOSYAH</h2>
+        <h3>${escapeHtml(lbg.nama || "LAJNAH MUROQOBAH YANBU'A")} - ${escapeHtml(lbg.wilayah || "LAMPUNG BARAT")}</h3>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>No Ujian</th>
+            <th>Nama Santri</th>
+            <th>Asal Unit RTQ</th>
+            <th>Ghorib</th>
+            <th>Tajwid</th>
+            <th>Tartil</th>
+            <th>Surat</th>
+            <th>Do'a</th>
+            <th>Tauhid</th>
+            <th>Wudlu</th>
+            <th>Sholat</th>
+            <th>Kitabah</th>
+            <th>Total</th>
+            <th>Rata</th>
+            <th>Rank</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map((s, idx) => `
+            <tr>
+              <td class="center">${idx + 1}</td>
+              <td class="center">${escapeHtml(s.no_ujian || '-')}</td>
+              <td class="bold">${escapeHtml(s.nama)}</td>
+              <td>${escapeHtml(s.rtq_nama || '-')}</td>
+              <td class="center">${s.ghorib}</td>
+              <td class="center">${s.tajwid}</td>
+              <td class="center">${s.tartil}</td>
+              <td class="center">${s.surat}</td>
+              <td class="center">${s.doa}</td>
+              <td class="center">${s.tauhid}</td>
+              <td class="center">${s.wudlu}</td>
+              <td class="center">${s.sholat}</td>
+              <td class="center">${s.kitabah}</td>
+              <td class="center bold">${s.totalNilai}</td>
+              <td class="center bold">${s.rataRata}</td>
+              <td class="center bold">${s.rank}</td>
+              <td class="center ${s.isLulus ? '' : 'style="color:red;"'}">${s.isLulus ? 'LULUS' : 'TIDAK LULUS'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="footer">
+        <div class="sig">
+          <div>Lampung Barat, September 2025</div>
+          <div style="font-weight: bold; margin-top: 4px;">Ketua Panitia Ujian</div>
+          <div style="height: 60px;"></div>
+          <div style="font-weight: bold; text-decoration: underline;">${escapeHtml(lbg.ketua_panitia || 'A. Muslih Abdurrahman')}</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+  win.document.close();
 }
 
 // ==========================================
-// 5. CETAK DOKUMEN RESMI (SYAHADAH & TRANSKRIP)
+// 5. CETAK SYAHADAH DENGAN LOGO PNG ASLI
 // ==========================================
 function setupCetakTab() {
   const select = document.getElementById('cetakSantriSelect');
   if (!select) return;
 
-  const currentVal = select.value;
+  const cur = select.value;
   select.innerHTML = '<option value="">-- Pilih Santri untuk Dicetak --</option>';
   appData.santri.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s.id;
-    opt.textContent = `${s.noUjian || '-'} - ${s.nama}`;
+    opt.textContent = `${s.no_ujian || '-'} - ${s.nama} (${s.rtq_kode || s.rtq_nama})`;
     select.appendChild(opt);
   });
 
-  if (currentVal && appData.santri.some(s => s.id == currentVal)) {
-    select.value = currentVal;
+  if (cur && appData.santri.some(s => s.id == cur)) {
+    select.value = cur;
   } else if (appData.santri.length > 0) {
     select.value = appData.santri[0].id;
   }
@@ -687,11 +804,10 @@ function generateCetakPreview() {
   }
 
   const { list } = calculateSantriStats();
-  const s = list.find(x => x.id === santriId);
+  const s = list.find(x => x.id == santriId);
   if (!s) return;
 
   let html = '';
-
   if (docType === 'depan' || docType === 'both') {
     html += renderSyahadahDepan(s);
   }
@@ -716,7 +832,7 @@ function previewSingleCetak(santriId, docType) {
 
 // Syahadah Depan Template
 function renderSyahadahDepan(s) {
-  const cfg = appData.config;
+  const lbg = appData.lembaga;
   const binWord = s.gender === 'P' ? 'Binti' : 'Bin';
   const ayahNama = s.ayah || '-';
 
@@ -726,19 +842,19 @@ function renderSyahadahDepan(s) {
 
       <div class="syahadah-header">
         <div class="arabic-bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-        <img src="assets/images/logo-yanbua.jpg" alt="Logo Yanbua" class="syahadah-logo" />
+        <img src="assets/images/logo-yanbua.png" alt="Logo Yanbu'a" class="syahadah-logo" />
         <h1 class="syahadah-title">SYAHADAH</h1>
         <div class="syahadah-subtitle">ROUDLOTU TARBIYATIL QUR'AN</div>
-        <div class="syahadah-subtitle">${escapeHtml(cfg.lembaga || "LAJNAH MUROQOBAH LEMBAGA PENDIDIKAN AL-QUR'AN")}</div>
-        <div class="syahadah-subtitle">${escapeHtml(cfg.metode || "THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR'AN YANBU'A")}</div>
-        <div class="syahadah-subtitle">${escapeHtml(cfg.wilayah || "KABUPATEN LAMPUNG BARAT")}</div>
-        <div class="syahadah-nomor">Nomor : ${escapeHtml(s.noSyahadah || '-')}</div>
+        <div class="syahadah-subtitle">${escapeHtml(lbg.nama || "LAJNAH MUROQOBAH LEMBAGA PENDIDIKAN AL-QUR'AN")}</div>
+        <div class="syahadah-subtitle">${escapeHtml(lbg.metode || "THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR'AN YANBU'A")}</div>
+        <div class="syahadah-subtitle">${escapeHtml(lbg.wilayah || "KABUPATEN LAMPUNG BARAT")}</div>
+        <div class="syahadah-nomor">Nomor : ${escapeHtml(s.no_syahadah || '-')}</div>
         <div class="syahadah-divider"></div>
       </div>
 
       <div class="syahadah-body">
         <p>
-          Setelah mengadakan ujian akhir RTQ tingkat dasar pada tanggal <strong>${escapeHtml(cfg.tanggalMunaqosyahH || "14 Rabi'ul Awwal 1447 H")} / ${escapeHtml(cfg.tanggalMunaqosyahM || "07 September 2025 M")}</strong> yang diselenggarakan di <strong>${escapeHtml(cfg.rtqName || "RTQ UTSMANIYYAH III")}</strong> ${escapeHtml(cfg.rtqAlamat || "")}, maka kami menyatakan bahwa anak yang bernama:
+          Setelah mengadakan ujian akhir RTQ tingkat dasar pada tanggal <strong>${escapeHtml(s.tanggal_h || "14 Rabi'ul Awwal 1447 H")} / ${escapeHtml(s.tanggal_m || "07 September 2025 M")}</strong> yang diselenggarakan di <strong>${escapeHtml(s.rtq_nama || "RTQ UTSMANIYYAH III")}</strong> ${escapeHtml(s.rtq_alamat || "")}, maka kami menyatakan bahwa anak yang bernama:
         </p>
 
         <table class="santri-bio-table">
@@ -760,7 +876,7 @@ function renderSyahadahDepan(s) {
           <tr>
             <td class="label-col">Nomor Induk Santri</td>
             <td class="colon-col">:</td>
-            <td class="value-col">${escapeHtml(s.noInduk || '-')}</td>
+            <td class="value-col">${escapeHtml(s.no_induk || '-')}</td>
           </tr>
           <tr>
             <td class="label-col">Alamat</td>
@@ -776,42 +892,39 @@ function renderSyahadahDepan(s) {
 
       <div class="syahadah-footer">
         <div class="signature-block">
-          <div class="signature-date">Lampung Barat, ${escapeHtml(cfg.tanggalSyahadah || "21 September 2025")}</div>
+          <div class="signature-date">Lampung Barat, ${escapeHtml(s.tanggal_syahadah || "21 September 2025")}</div>
           <div class="signature-role">Lajnah Muroqobah Yanbu'a</div>
-          <div class="signature-name">${escapeHtml(cfg.pimpinanLajnah || "SYA'BUL MUBAROK")}</div>
+          <div class="signature-name">${escapeHtml(lbg.pimpinan_lajnah || "SYA'BUL MUBAROK")}</div>
         </div>
       </div>
     </div>
   `;
 }
 
-// Syahadah Belakang (Transkrip Nilai) Template
+// Syahadah Belakang (Transkrip Nilai)
 function renderSyahadahBelakang(s) {
-  const cfg = appData.config;
-  const scores = s.scores || {};
-
+  const lbg = appData.lembaga;
   const rows = [
-    { no: 1, materi: 'Tartil Fashohah', val: scores.tartil ?? 0 },
-    { no: 2, materi: 'Ghoroibul Qur\'an', val: scores.ghorib ?? 0 },
-    { no: 3, materi: 'Ilmu Tajwid', val: scores.tajwid ?? 0 },
-    { no: 4, materi: 'Tauhid Dasar', val: scores.tauhid ?? 0 },
-    { no: 5, materi: 'Praktik Wudlu', val: scores.wudlu ?? 0 },
-    { no: 6, materi: 'Praktik Sholat', val: scores.sholat ?? 0 },
-    { no: 7, materi: 'Hafalan Surat Pendek', val: scores.surat ?? 0 },
-    { no: 8, materi: 'Hafalan Do\'a Harian', val: scores.doa ?? 0 },
-    { no: 9, materi: 'Kitabah', val: scores.kitabah ?? 0 }
+    { no: 1, materi: 'Tartil & Fashohah', val: s.tartil },
+    { no: 2, materi: 'Ghoroibul Qur\'an', val: s.ghorib },
+    { no: 3, materi: 'Ilmu Tajwid', val: s.tajwid },
+    { no: 4, materi: 'Tauhid Dasar', val: s.tauhid },
+    { no: 5, materi: 'Praktik Wudlu', val: s.wudlu },
+    { no: 6, materi: 'Praktik Sholat', val: s.sholat },
+    { no: 7, materi: 'Hafalan Surat Pendek', val: s.surat },
+    { no: 8, materi: 'Hafalan Do\'a Harian', val: s.doa },
+    { no: 9, materi: 'Kitabah', val: s.kitabah }
   ];
 
-  let total = 0;
-  rows.forEach(r => { total += Number(r.val); });
-  const rata = (total / rows.length).toFixed(1);
+  const total = s.totalNilai;
+  const rata = s.rataRata;
 
   return `
     <div class="a4-page syahadah-belakang">
       <div>
         <div class="transkrip-header">
           <h2>DAFTAR NILAI UJIAN AKHIR RTQ</h2>
-          <h3>TAHUN PELAJARAN ${escapeHtml(cfg.tahunPelajaran || "2025 M / 1447 H")}</h3>
+          <h3>TAHUN PELAJARAN ${escapeHtml(s.tahun_pelajaran || "2025 M / 1447 H")}</h3>
         </div>
 
         <table class="transkrip-bio">
@@ -826,19 +939,19 @@ function renderSyahadahBelakang(s) {
             <td>${escapeHtml(s.ttl || '-')}</td>
           </tr>
           <tr>
-            <td>Asal RTQ</td>
+            <td>Asal Unit RTQ</td>
             <td>:</td>
-            <td>${escapeHtml(s.rtq || cfg.rtqName || 'RTQ Utsmaniyyah III')}</td>
+            <td>${escapeHtml(s.rtq_nama || 'RTQ Utsmaniyyah III')}</td>
           </tr>
           <tr>
             <td>Nomor Induk Santri</td>
             <td>:</td>
-            <td>${escapeHtml(s.noInduk || '-')}</td>
+            <td>${escapeHtml(s.no_induk || '-')}</td>
           </tr>
           <tr>
             <td>Nomor Ujian</td>
             <td>:</td>
-            <td>${escapeHtml(s.noUjian || '-')}</td>
+            <td>${escapeHtml(s.no_ujian || '-')}</td>
           </tr>
         </table>
 
@@ -879,21 +992,21 @@ function renderSyahadahBelakang(s) {
 
       <div>
         <div style="text-align: right; margin-bottom: 8px; font-size: 10pt;">
-          ${escapeHtml(cfg.tempatTanggal || "Tambak Jaya, 07 September 2025")}
+          ${escapeHtml(s.titimangsa || "Tambak Jaya, 07 September 2025")}
         </div>
         <div class="transkrip-signatures">
           <div class="sig-box">
-            <div>Kepala ${escapeHtml(cfg.rtqName || "RTQ Utsmaniyyah III")}</div>
+            <div>Kepala ${escapeHtml(s.rtq_nama || "RTQ Utsmaniyyah III")}</div>
             <div class="sig-space"></div>
             <div style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-              ${escapeHtml(cfg.kepalaRtq || "ABU HANIFAN")}
+              ${escapeHtml(s.kepala_rtq || "ABU HANIFAN")}
             </div>
           </div>
           <div class="sig-box">
             <div>Ketua Tim Penguji</div>
             <div class="sig-space"></div>
             <div style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-              ${escapeHtml(cfg.ketuaPenguji || "IKHWANUL KIROM")}
+              ${escapeHtml(s.ketua_penguji || "IKHWANUL KIROM")}
             </div>
           </div>
         </div>
@@ -904,13 +1017,12 @@ function renderSyahadahBelakang(s) {
 
 // Formulir Santri Template
 function renderFormulirSantri(s) {
-  const cfg = appData.config;
   return `
     <div class="a4-page" style="padding: 18mm 20mm;">
       <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
         <h2 style="font-size: 14pt; font-weight: bold; text-transform: uppercase;">FORMULIR UJIAN AKHIR RTQ</h2>
         <h3 style="font-size: 11pt; font-weight: normal;">THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR'AN YANBU'A</h3>
-        <p style="font-size: 10pt; font-weight: bold;">PERIODE ${escapeHtml(cfg.tahunPelajaran || "2025 M / 1447 H")}</p>
+        <p style="font-size: 10pt; font-weight: bold;">PERIODE ${escapeHtml(s.tahun_pelajaran || "2025 M / 1447 H")}</p>
       </div>
 
       <table style="width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 30px;">
@@ -920,12 +1032,12 @@ function renderFormulirSantri(s) {
         <tr><td style="padding: 7px 4px;">Nama Ibu Kandung</td><td>:</td><td>${escapeHtml(s.ibu || '-')}</td></tr>
         <tr><td style="padding: 7px 4px;">Tempat, Tanggal Lahir</td><td>:</td><td>${escapeHtml(s.ttl || '-')}</td></tr>
         <tr><td style="padding: 7px 4px;">Alamat Lengkap</td><td>:</td><td>${escapeHtml(s.alamat || '-')}</td></tr>
-        <tr><td style="padding: 7px 4px;">Nomor Induk Santri</td><td>:</td><td>${escapeHtml(s.noInduk || '-')}</td></tr>
-        <tr><td style="padding: 7px 4px;">Nomor Ujian</td><td>:</td><td>${escapeHtml(s.noUjian || '-')}</td></tr>
-        <tr><td style="padding: 7px 4px;">Nama Lembaga / RTQ</td><td>:</td><td>${escapeHtml(cfg.rtqName || 'RTQ Utsmaniyyah III')}</td></tr>
-        <tr><td style="padding: 7px 4px;">Alamat RTQ</td><td>:</td><td>${escapeHtml(cfg.rtqAlamat || '-')}</td></tr>
-        <tr><td style="padding: 7px 4px;">No. WhatsApp RTQ</td><td>:</td><td>${escapeHtml(cfg.rtqWa || '-')}</td></tr>
-        <tr><td style="padding: 7px 4px;">Nama Kepala RTQ</td><td>:</td><td>${escapeHtml(cfg.kepalaRtq || 'Abu Hanifan')}</td></tr>
+        <tr><td style="padding: 7px 4px;">Nomor Induk Santri</td><td>:</td><td>${escapeHtml(s.no_induk || '-')}</td></tr>
+        <tr><td style="padding: 7px 4px;">Nomor Ujian</td><td>:</td><td>${escapeHtml(s.no_ujian || '-')}</td></tr>
+        <tr><td style="padding: 7px 4px;">Nama Unit RTQ</td><td>:</td><td>${escapeHtml(s.rtq_nama || '-')}</td></tr>
+        <tr><td style="padding: 7px 4px;">Alamat RTQ</td><td>:</td><td>${escapeHtml(s.rtq_alamat || '-')}</td></tr>
+        <tr><td style="padding: 7px 4px;">No. WhatsApp RTQ</td><td>:</td><td>${escapeHtml(s.rtq_wa || '-')}</td></tr>
+        <tr><td style="padding: 7px 4px;">Nama Kepala RTQ</td><td>:</td><td>${escapeHtml(s.kepala_rtq || '-')}</td></tr>
       </table>
 
       <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 11pt;">
@@ -935,17 +1047,17 @@ function renderFormulirSantri(s) {
           <div style="border-bottom: 1px dashed #333;"></div>
         </div>
         <div style="text-align: center; width: 220px;">
-          <div>${escapeHtml(cfg.tempatTanggal || 'Tambak Jaya, Agustus 2025')}</div>
-          <div>Kepala ${escapeHtml(cfg.rtqName || 'RTQ Utsmaniyyah III')}</div>
+          <div>${escapeHtml(s.titimangsa || 'Tambak Jaya, September 2025')}</div>
+          <div>Kepala ${escapeHtml(s.rtq_nama || '-')}</div>
           <div style="height: 55px;"></div>
-          <div style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">${escapeHtml(cfg.kepalaRtq || 'ABU HANIFAN')}</div>
+          <div style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">${escapeHtml(s.kepala_rtq || '-')}</div>
         </div>
       </div>
     </div>
   `;
 }
 
-// Print All Santri (Batch)
+// Batch Print All
 function printAllSyahadah(docType = 'both') {
   const container = document.getElementById('cetakPreviewArea');
   if (!container) return;
@@ -958,259 +1070,271 @@ function printAllSyahadah(docType = 'both') {
 
   let html = '';
   list.forEach(s => {
-    if (docType === 'depan' || docType === 'both') {
-      html += renderSyahadahDepan(s);
-    }
-    if (docType === 'belakang' || docType === 'both') {
-      html += renderSyahadahBelakang(s);
-    }
-    if (docType === 'formulir') {
-      html += renderFormulirSantri(s);
-    }
+    if (docType === 'depan' || docType === 'both') html += renderSyahadahDepan(s);
+    if (docType === 'belakang' || docType === 'both') html += renderSyahadahBelakang(s);
+    if (docType === 'formulir') html += renderFormulirSantri(s);
   });
 
   container.innerHTML = html;
-  setTimeout(() => {
-    window.print();
-  }, 200);
-}
-
-// Print Rekapitulasi Landscape
-function printRekapitulasiLandscape() {
-  const { sorted } = calculateSantriStats();
-  const cfg = appData.config;
-
-  const win = window.open('', '_blank');
-  win.document.write(`
-    <!DOCTYPE html>
-    <html lang="id">
-    <head>
-      <meta charset="UTF-8">
-      <title>Rekapitulasi Nilai Munaqosyah - ${escapeHtml(cfg.rtqName)}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #111; }
-        .rekap-title { text-align: center; margin-bottom: 16px; }
-        .rekap-title h2 { margin: 0 0 4px; font-size: 16pt; text-transform: uppercase; }
-        .rekap-title h3 { margin: 0; font-size: 12pt; font-weight: normal; }
-        table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 20px; }
-        th, td { border: 1px solid #333; padding: 5px 6px; }
-        th { background: #eef4f0; text-align: center; font-weight: bold; }
-        td.center { text-align: center; }
-        td.bold { font-weight: bold; }
-        .sig-container { display: flex; justify-content: flex-end; margin-top: 25px; }
-        .sig-box { text-align: center; width: 240px; font-size: 10pt; }
-        @page { size: A4 landscape; margin: 10mm; }
-        @media print { .no-print { display: none; } }
-      </style>
-    </head>
-    <body>
-      <div class="no-print" style="margin-bottom: 15px; text-align: right;">
-        <button onclick="window.print()" style="padding: 8px 18px; font-size: 11pt; cursor: pointer; background: #0f5132; color: #fff; border: none; border-radius: 4px;">🖨️ Cetak Dokumen</button>
-      </div>
-      <div class="rekap-title">
-        <h2>DAFTAR NILAI UJIAN AKHIR MUNAQOSYAH</h2>
-        <h3>${escapeHtml(cfg.lembaga)} - ${escapeHtml(cfg.wilayah)}</h3>
-        <div style="font-size: 10pt; margin-top: 4px;">Unit: <strong>${escapeHtml(cfg.rtqName)}</strong> | Tahun: ${escapeHtml(cfg.tahunPelajaran)}</div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>No Ujian</th>
-            <th>Nama Peserta</th>
-            <th>Asal RTQ</th>
-            <th>Tartil</th>
-            <th>Ghorib</th>
-            <th>Tajwid</th>
-            <th>Tauhid</th>
-            <th>Wudlu</th>
-            <th>Sholat</th>
-            <th>Surat</th>
-            <th>Do'a</th>
-            <th>Kitabah</th>
-            <th>Total</th>
-            <th>Rata</th>
-            <th>Rank</th>
-            <th>Keterangan</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${sorted.map((s, idx) => `
-            <tr>
-              <td class="center">${idx + 1}</td>
-              <td class="center">${escapeHtml(s.noUjian || '-')}</td>
-              <td class="bold">${escapeHtml(s.nama)}</td>
-              <td>${escapeHtml(s.rtq || '-')}</td>
-              <td class="center">${s.scores?.tartil ?? 0}</td>
-              <td class="center">${s.scores?.ghorib ?? 0}</td>
-              <td class="center">${s.scores?.tajwid ?? 0}</td>
-              <td class="center">${s.scores?.tauhid ?? 0}</td>
-              <td class="center">${s.scores?.wudlu ?? 0}</td>
-              <td class="center">${s.scores?.sholat ?? 0}</td>
-              <td class="center">${s.scores?.surat ?? 0}</td>
-              <td class="center">${s.scores?.doa ?? 0}</td>
-              <td class="center">${s.scores?.kitabah ?? 0}</td>
-              <td class="center bold">${s.totalNilai}</td>
-              <td class="center bold">${s.rataRata}</td>
-              <td class="center bold">${s.rank}</td>
-              <td class="center ${s.isLulus ? '' : 'style="color:red;"'}">${s.isLulus ? 'LULUS' : 'TIDAK LULUS'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      <div class="sig-container">
-        <div class="sig-box">
-          <div>${escapeHtml(cfg.tempatTanggal)}</div>
-          <div style="margin-top: 4px; font-weight: bold;">Ketua Panitia Ujian</div>
-          <div style="height: 60px;"></div>
-          <div style="font-weight: bold; text-decoration: underline;">${escapeHtml(cfg.ketuaPanitia || 'A. Muslih Abdurrahman')}</div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `);
-  win.document.close();
+  setTimeout(() => { window.print(); }, 200);
 }
 
 // ==========================================
-// 6. PENGATURAN LEMBAGA & BACKUP
+// 6. PENGATURAN MULTI-RTQ & PERIODE (CRUD)
 // ==========================================
-function populateConfigForm() {
-  const cfg = appData.config || {};
-  document.getElementById('cfgLembaga').value = cfg.lembaga || '';
-  document.getElementById('cfgMetode').value = cfg.metode || '';
-  document.getElementById('cfgWilayah').value = cfg.wilayah || '';
-  document.getElementById('cfgRtqName').value = cfg.rtqName || '';
-  document.getElementById('cfgRtqAlamat').value = cfg.rtqAlamat || '';
-  document.getElementById('cfgRtqWa').value = cfg.rtqWa || '';
-  document.getElementById('cfgTahunPelajaran').value = cfg.tahunPelajaran || '';
-  document.getElementById('cfgTanggalH').value = cfg.tanggalMunaqosyahH || '';
-  document.getElementById('cfgTanggalM').value = cfg.tanggalMunaqosyahM || '';
-  document.getElementById('cfgTanggalSyahadah').value = cfg.tanggalSyahadah || '';
-  document.getElementById('cfgTempatTanggal').value = cfg.tempatTanggal || '';
-  document.getElementById('cfgKepalaRtq').value = cfg.kepalaRtq || '';
-  document.getElementById('cfgKetuaPenguji').value = cfg.ketuaPenguji || '';
-  document.getElementById('cfgKetuaPanitia').value = cfg.ketuaPanitia || '';
-  document.getElementById('cfgPimpinanLajnah').value = cfg.pimpinanLajnah || '';
-  document.getElementById('cfgKkm').value = cfg.kkm || 65;
+function populateConfigTab() {
+  const lbg = appData.lembaga || {};
+  document.getElementById('cfgLembaga').value = lbg.nama || '';
+  document.getElementById('cfgMetode').value = lbg.metode || '';
+  document.getElementById('cfgWilayah').value = lbg.wilayah || '';
+  document.getElementById('cfgTingkat').value = lbg.tingkat || '';
+  document.getElementById('cfgPimpinanLajnah').value = lbg.pimpinan_lajnah || '';
+  document.getElementById('cfgKetuaPanitia').value = lbg.ketua_panitia || '';
+  document.getElementById('cfgKkm').value = lbg.kkm || 60;
+
+  // Render Tabel RTQ
+  const rtqTbody = document.getElementById('rtqListTableBody');
+  if (rtqTbody) {
+    rtqTbody.innerHTML = appData.daftarRtq.map(r => `
+      <tr>
+        <td><strong>${escapeHtml(r.kode)}</strong></td>
+        <td><strong>${escapeHtml(r.nama)}</strong></td>
+        <td style="font-size: 0.8rem;">${escapeHtml(r.alamat)}</td>
+        <td>${escapeHtml(r.kepala_rtq)}</td>
+        <td>${escapeHtml(r.ketua_penguji)}</td>
+        <td>${escapeHtml(r.wa || '-')}</td>
+        <td class="text-center">
+          <button class="btn btn-outline btn-sm btn-icon" onclick="openEditRtqModal(${r.id})">✏️</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // Render Tabel Periode
+  const periodeTbody = document.getElementById('periodeListTableBody');
+  if (periodeTbody) {
+    periodeTbody.innerHTML = appData.daftarPeriode.map(p => `
+      <tr>
+        <td><strong>${escapeHtml(p.tahun_pelajaran)}</strong></td>
+        <td>${escapeHtml(p.tanggal_h || '-')}</td>
+        <td>${escapeHtml(p.tanggal_m || '-')}</td>
+        <td>${escapeHtml(p.tanggal_syahadah || '-')}</td>
+        <td>${escapeHtml(p.titimangsa || '-')}</td>
+        <td class="text-center">
+          <button class="btn btn-outline btn-sm btn-icon" onclick="openEditPeriodeModal(${p.id})">✏️</button>
+        </td>
+      </tr>
+    `).join('');
+  }
 }
 
-function handleSaveConfig(e) {
+async function handleSaveConfig(e) {
   e.preventDefault();
-  appData.config = {
-    ...appData.config,
-    lembaga: document.getElementById('cfgLembaga').value.trim(),
+  const payload = {
+    nama: document.getElementById('cfgLembaga').value.trim(),
     metode: document.getElementById('cfgMetode').value.trim(),
     wilayah: document.getElementById('cfgWilayah').value.trim(),
-    rtqName: document.getElementById('cfgRtqName').value.trim(),
-    rtqAlamat: document.getElementById('cfgRtqAlamat').value.trim(),
-    rtqWa: document.getElementById('cfgRtqWa').value.trim(),
-    tahunPelajaran: document.getElementById('cfgTahunPelajaran').value.trim(),
-    tanggalMunaqosyahH: document.getElementById('cfgTanggalH').value.trim(),
-    tanggalMunaqosyahM: document.getElementById('cfgTanggalM').value.trim(),
-    tanggalSyahadah: document.getElementById('cfgTanggalSyahadah').value.trim(),
-    tempatTanggal: document.getElementById('cfgTempatTanggal').value.trim(),
-    kepalaRtq: document.getElementById('cfgKepalaRtq').value.trim(),
-    ketuaPenguji: document.getElementById('cfgKetuaPenguji').value.trim(),
-    ketuaPanitia: document.getElementById('cfgKetuaPanitia').value.trim(),
-    pimpinanLajnah: document.getElementById('cfgPimpinanLajnah').value.trim(),
-    kkm: Number(document.getElementById('cfgKkm').value) || 65
+    tingkat: document.getElementById('cfgTingkat').value.trim(),
+    pimpinan_lajnah: document.getElementById('cfgPimpinanLajnah').value.trim(),
+    ketua_panitia: document.getElementById('cfgKetuaPanitia').value.trim(),
+    kkm: document.getElementById('cfgKkm').value
   };
 
-  saveData();
-  alert('Pengaturan lembaga berhasil disimpan!');
-  renderAll();
+  try {
+    const res = await fetch('api.php?action=save_lembaga', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      alert('Data Lembaga berhasil disimpan ke database MySQL!');
+      await loadDataFromBackend();
+    }
+  } catch (err) {
+    alert('Gagal menyimpan data lembaga.');
+  }
 }
 
-// Backup & Restore
+// RTQ Modal
+function openAddRtqModal() {
+  document.getElementById('rtqModalTitle').textContent = 'Tambah Unit RTQ Baru';
+  document.getElementById('rtqForm').reset();
+  document.getElementById('rtqIdInput').value = '';
+  openModal('rtqModal');
+}
+
+function openEditRtqModal(id) {
+  const r = appData.daftarRtq.find(x => x.id == id);
+  if (!r) return;
+  document.getElementById('rtqModalTitle').textContent = 'Edit Data Unit RTQ';
+  document.getElementById('rtqIdInput').value = r.id;
+  document.getElementById('inputRtqKode').value = r.kode;
+  document.getElementById('inputRtqNamaModal').value = r.nama;
+  document.getElementById('inputRtqAlamatModal').value = r.alamat;
+  document.getElementById('inputRtqKepalaModal').value = r.kepala_rtq;
+  document.getElementById('inputRtqPengujiModal').value = r.ketua_penguji;
+  document.getElementById('inputRtqWaModal').value = r.wa || '';
+  openModal('rtqModal');
+}
+
+async function handleSaveRtq(e) {
+  e.preventDefault();
+  const id = document.getElementById('rtqIdInput').value;
+  const payload = {
+    id: id || null,
+    kode: document.getElementById('inputRtqKode').value.trim(),
+    nama: document.getElementById('inputRtqNamaModal').value.trim(),
+    alamat: document.getElementById('inputRtqAlamatModal').value.trim(),
+    kepala_rtq: document.getElementById('inputRtqKepalaModal').value.trim(),
+    ketua_penguji: document.getElementById('inputRtqPengujiModal').value.trim(),
+    wa: document.getElementById('inputRtqWaModal').value.trim()
+  };
+
+  try {
+    const res = await fetch('api.php?action=save_rtq', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      closeModal('rtqModal');
+      await loadDataFromBackend();
+      alert('Unit RTQ berhasil disimpan!');
+    }
+  } catch (err) {
+    alert('Gagal menyimpan unit RTQ.');
+  }
+}
+
+// Periode Modal
+function openAddPeriodeModal() {
+  document.getElementById('periodeModalTitle').textContent = 'Tambah Tahun / Periode Ujian';
+  document.getElementById('periodeForm').reset();
+  document.getElementById('periodeIdInput').value = '';
+  openModal('periodeModal');
+}
+
+function openEditPeriodeModal(id) {
+  const p = appData.daftarPeriode.find(x => x.id == id);
+  if (!p) return;
+  document.getElementById('periodeModalTitle').textContent = 'Edit Periode Ujian';
+  document.getElementById('periodeIdInput').value = p.id;
+  document.getElementById('inputPeriodeTahun').value = p.tahun_pelajaran;
+  document.getElementById('inputPeriodeH').value = p.tanggal_h || '';
+  document.getElementById('inputPeriodeM').value = p.tanggal_m || '';
+  document.getElementById('inputPeriodeSyahadah').value = p.tanggal_syahadah || '';
+  document.getElementById('inputPeriodeTitimangsa').value = p.titimangsa || '';
+  openModal('periodeModal');
+}
+
+async function handleSavePeriode(e) {
+  e.preventDefault();
+  const id = document.getElementById('periodeIdInput').value;
+  const payload = {
+    id: id || null,
+    tahun_pelajaran: document.getElementById('inputPeriodeTahun').value.trim(),
+    tanggal_h: document.getElementById('inputPeriodeH').value.trim(),
+    tanggal_m: document.getElementById('inputPeriodeM').value.trim(),
+    tanggal_syahadah: document.getElementById('inputPeriodeSyahadah').value.trim(),
+    titimangsa: document.getElementById('inputPeriodeTitimangsa').value.trim()
+  };
+
+  try {
+    const res = await fetch('api.php?action=save_periode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      closeModal('periodeModal');
+      await loadDataFromBackend();
+      alert('Periode ujian berhasil disimpan!');
+    }
+  } catch (err) {
+    alert('Gagal menyimpan periode ujian.');
+  }
+}
+
+// Role Switcher Modal
+function openRoleModal() {
+  const container = document.getElementById('roleOptionList');
+  if (!container) return;
+
+  container.innerHTML = appData.daftarUsers.map(u => {
+    const isCur = u.id == appData.currentUser.id;
+    return `
+      <div class="role-card ${isCur ? 'active' : ''}" onclick="selectUserRole(${u.id})">
+        <div>
+          <div class="role-title">
+            <span>${u.role === 'SUPER_ADMIN' ? '👑' : '🕌'}</span>
+            <span>${escapeHtml(u.nama)}</span>
+          </div>
+          <div class="role-desc">Username: <code>${escapeHtml(u.username)}</code> ${u.rtq_nama ? '| ' + escapeHtml(u.rtq_nama) : '| Seluruh 3 RTQ'}</div>
+        </div>
+        <div>
+          ${isCur ? '<span class="badge badge-success">Aktif</span>' : '<button class="btn btn-sm btn-outline">Pilih</button>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  openModal('roleModal');
+}
+
+async function selectUserRole(userId) {
+  try {
+    const res = await fetch('api.php?action=switch_user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId })
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      closeModal('roleModal');
+      await loadDataFromBackend();
+      alert(`Berhasil beralih ke: ${result.user.nama}`);
+    }
+  } catch (err) {
+    alert('Gagal mengganti profil pengurus.');
+  }
+}
+
+// Backup JSON
 function backupDataJson() {
   const str = JSON.stringify(appData, null, 2);
   const blob = new Blob([str], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `backup_munaqosyah_utsmaniyyah_${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `backup_database_utsmaniyyah_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
 }
 
-function restoreDataJson(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    try {
-      const parsed = JSON.parse(evt.target.result);
-      if (parsed.santri && parsed.config) {
-        if (confirm('Apakah Anda yakin ingin memulihkan data dari file cadangan ini? Data saat ini akan ditimpa.')) {
-          appData = parsed;
-          saveData();
-          renderAll();
-          alert('Data berhasil dipulihkan!');
-        }
-      } else {
-        alert('Format file JSON tidak valid!');
-      }
-    } catch (err) {
-      alert('Gagal membaca file JSON: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-function resetToDefaultData() {
-  if (confirm('Peringatan: Seluruh data akan dikembalikan ke data awal bawaan Excel aplikasi.xlsx. Lanjutkan?')) {
-    localStorage.removeItem('utsmaniyyah_munaqosyah_data');
-    loadData().then(() => {
-      renderAll();
-      alert('Data berhasil di-reset ke data bawaan Excel.');
-    });
-  }
-}
-
-// ==========================================
-// UTILITY FUNCTIONS & EVENT LISTENERS
-// ==========================================
+// Event Listeners
 function setupEventListeners() {
-  // Santri search input
-  const searchInput = document.getElementById('searchSantriInput');
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      renderSantriTable();
-    });
-  }
+  document.getElementById('searchSantriInput')?.addEventListener('input', renderSantriTable);
+  document.getElementById('santriForm')?.addEventListener('submit', handleSaveSantri);
+  document.getElementById('rtqForm')?.addEventListener('submit', handleSaveRtq);
+  document.getElementById('periodeForm')?.addEventListener('submit', handleSavePeriode);
+  document.getElementById('configForm')?.addEventListener('submit', handleSaveConfig);
 
-  // Santri form
-  const santriForm = document.getElementById('santriForm');
-  if (santriForm) {
-    santriForm.addEventListener('submit', handleSaveSantri);
-  }
+  document.getElementById('topbarRtqFilter')?.addEventListener('change', () => loadDataFromBackend());
+  document.getElementById('topbarPeriodeFilter')?.addEventListener('change', () => loadDataFromBackend());
 
-  // Config form
-  const configForm = document.getElementById('configForm');
-  if (configForm) {
-    configForm.addEventListener('submit', handleSaveConfig);
-  }
-
-  // Cetak selector change
-  const cetakSelect = document.getElementById('cetakSantriSelect');
-  if (cetakSelect) {
-    cetakSelect.addEventListener('change', generateCetakPreview);
-  }
-
-  const docTypeSelect = document.getElementById('cetakDocTypeSelect');
-  if (docTypeSelect) {
-    docTypeSelect.addEventListener('change', generateCetakPreview);
-  }
+  document.getElementById('cetakSantriSelect')?.addEventListener('change', generateCetakPreview);
+  document.getElementById('cetakDocTypeSelect')?.addEventListener('change', generateCetakPreview);
 }
 
-function openModal(modalId) {
-  const m = document.getElementById(modalId);
+function openModal(id) {
+  const m = document.getElementById(id);
   if (m) m.classList.add('show');
 }
 
-function closeModal(modalId) {
-  const m = document.getElementById(modalId);
+function closeModal(id) {
+  const m = document.getElementById(id);
   if (m) m.classList.remove('show');
 }
 
