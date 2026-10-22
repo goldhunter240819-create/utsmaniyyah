@@ -120,41 +120,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       margin-bottom: 18px;
       text-align: left;
     }
-    .quick-account-box {
-      margin-top: 24px;
-      padding: 14px;
-      background: #f8faf9;
-      border-radius: var(--radius-md);
-      border: 1px dashed var(--gray-300);
-      text-align: left;
-      font-size: 0.8rem;
-    }
-    .quick-account-title {
-      font-weight: 700;
-      color: var(--primary-800);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .account-badge-btn {
-      display: inline-block;
-      margin: 3px 2px;
-      padding: 5px 9px;
-      background: #fff;
-      border: 1px solid var(--gray-300);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.75rem;
-      color: var(--dark-700);
-      transition: all 0.2s;
-    }
-    .account-badge-btn:hover {
-      background: var(--primary-100);
-      border-color: var(--primary-600);
-      color: var(--primary-900);
-    }
   </style>
 </head>
 <body>
@@ -194,30 +159,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </button>
       </form>
 
-      <div class="quick-account-box">
-        <div class="quick-account-title">
-          <span>🔑 Klik untuk Isi Cepat Akun:</span>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-          <button type="button" class="account-badge-btn" onclick="fillLogin('Maul', 'Basenglah123.')">👑 Developer (Maul)</button>
-          <button type="button" class="account-badge-btn" onclick="fillLogin('Utsmaniyyah1', 'Utsmaniyyah1')">🏫 Admin RTQ 1</button>
-          <button type="button" class="account-badge-btn" onclick="fillLogin('Utsmaniyyah2', 'Utsmaniyyah2')">🏫 Admin RTQ 2</button>
-          <button type="button" class="account-badge-btn" onclick="fillLogin('Utsmaniyyah3', 'Utsmaniyyah3')">🏫 Admin RTQ 3</button>
-        </div>
-      </div>
-
-      <div class="login-footer-security">
+      <div class="login-footer-security" style="margin-top: 24px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         <span>Sistem Akses Terisolasi & Terenkripsi Aman</span>
       </div>
     </div>
   </div>
-
-  <script>
-    function fillLogin(user, pass) {
-      document.getElementById('loginUsername').value = user;
-      document.getElementById('loginPassword').value = pass;
-    }
-  </script>
 </body>
 </html>

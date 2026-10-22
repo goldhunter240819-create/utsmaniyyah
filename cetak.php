@@ -46,6 +46,16 @@ require_once __DIR__ . '/includes/header.php';
           </select>
         </div>
 
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label style="font-size: 0.82rem; font-weight: 700; color: var(--dark-700); white-space: nowrap;">Gaya Kaligrafi:</label>
+          <select id="cetakKhatStyleSelect" class="form-control" style="width: 215px; font-weight: 600;" onchange="generateCetakPreview()">
+            <option value="katibeh" selected>Khat Katibeh (Elegan Berseni)</option>
+            <option value="ruqaa">Khat Aref Ruq'ah (Klasik)</option>
+            <option value="original">Kaligrafi Yanbu'a Asli (Besar)</option>
+            <option value="amiri">Khat Mushaf Quran (Amiri)</option>
+          </select>
+        </div>
+
         <!-- Toggles for Certificate Authenticity -->
         <div style="display: flex; align-items: center; gap: 18px; margin-left: auto; flex-wrap: wrap;">
           <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; color: var(--dark-700);" title="Centang untuk cetak pada kertas HVS putih atau export PDF. Hilangkan centang jika mencetak di atas kertas blangko bersertifikat resmi.">

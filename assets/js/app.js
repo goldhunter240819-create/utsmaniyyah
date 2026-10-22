@@ -961,6 +961,7 @@ function setupCetakTab() {
 function generateCetakPreview() {
   const select = document.getElementById('cetakSantriSelect');
   const docType = document.getElementById('cetakDocTypeSelect')?.value || 'both';
+  const khatStyle = document.getElementById('cetakKhatStyleSelect')?.value || 'katibeh';
   const showFrame = document.getElementById('chkShowFrame') ? document.getElementById('chkShowFrame').checked : true;
   const showStamp = document.getElementById('chkShowStamp') ? document.getElementById('chkShowStamp').checked : true;
   const container = document.getElementById('cetakPreviewArea');
@@ -978,7 +979,7 @@ function generateCetakPreview() {
 
   let html = '';
   if (docType === 'depan' || docType === 'both') {
-    html += renderSyahadahDepan(s, { showFrame, showStamp });
+    html += renderSyahadahDepan(s, { showFrame, showStamp, khatStyle });
   }
   if (docType === 'belakang' || docType === 'both') {
     html += renderSyahadahBelakang(s, { showFrame, showStamp });
@@ -1188,10 +1189,23 @@ function getSyahadahVectorFrameSvg() {
 function renderSyahadahDepan(s, opts = {}) {
   const showFrame = opts.showFrame !== undefined ? opts.showFrame : (document.getElementById('chkShowFrame')?.checked ?? true);
   const showStamp = opts.showStamp !== undefined ? opts.showStamp : (document.getElementById('chkShowStamp')?.checked ?? true);
+  const khatStyle = opts.khatStyle || (document.getElementById('cetakKhatStyleSelect')?.value ?? 'katibeh');
   const lbg = appData.lembaga || {};
   const binWord = s.gender === 'P' ? 'Binti' : 'Bin';
   const ayahNama = s.ayah || '-';
   const noSyahadah = s.no_syahadah || 'LMY-LB/RTQ-U1/001/09/10/2025';
+
+  let arabicHeaderHtml = '';
+  if (khatStyle === 'original') {
+    arabicHeaderHtml = `<img src="assets/images/arabic_header_syahadah.png" alt="وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا" class="khat-img-original" />`;
+  } else if (khatStyle === 'ruqaa') {
+    arabicHeaderHtml = `<span class="arabic-quran-text font-ruqaa">وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا</span>`;
+  } else if (khatStyle === 'amiri') {
+    arabicHeaderHtml = `<span class="arabic-quran-text font-amiri">وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا</span>`;
+  } else {
+    // Default: Katibeh (Font Kaligrafi Berseni Tinggi, Melengkung Luwes & Megah)
+    arabicHeaderHtml = `<span class="arabic-quran-text font-katibeh">وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا</span>`;
+  }
 
   return `
     <div class="a4-page syahadah-page-depan ${showFrame ? 'has-frame' : 'no-frame'}">
@@ -1202,9 +1216,9 @@ function renderSyahadahDepan(s, opts = {}) {
       </div>
 
       <div class="syahadah-inner-content">
-        <!-- 1. Arabic Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) - Teks Asli Vektor -->
+        <!-- 1. Arabic Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) -->
         <div class="syahadah-arabic-calligraphy" dir="rtl" lang="ar">
-          <span class="arabic-quran-text">وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا</span>
+          ${arabicHeaderHtml}
         </div>
 
         <!-- 2. Main Title -->
@@ -1474,6 +1488,7 @@ function printAllSyahadah(docType = 'both') {
 
   const showFrame = document.getElementById('chkShowFrame') ? document.getElementById('chkShowFrame').checked : true;
   const showStamp = document.getElementById('chkShowStamp') ? document.getElementById('chkShowStamp').checked : true;
+  const khatStyle = document.getElementById('cetakKhatStyleSelect')?.value || 'katibeh';
 
   const { list } = calculateSantriStats();
   if (list.length === 0) {
@@ -1483,7 +1498,7 @@ function printAllSyahadah(docType = 'both') {
 
   let html = '';
   list.forEach(s => {
-    if (docType === 'depan' || docType === 'both') html += renderSyahadahDepan(s, { showFrame, showStamp });
+    if (docType === 'depan' || docType === 'both') html += renderSyahadahDepan(s, { showFrame, showStamp, khatStyle });
     if (docType === 'belakang' || docType === 'both') html += renderSyahadahBelakang(s, { showFrame, showStamp });
     if (docType === 'formulir') html += renderFormulirSantri(s);
   });

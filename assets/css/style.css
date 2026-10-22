@@ -142,25 +142,34 @@ body {
 }
 
 /* User Profile Glass Card */
-.sidebar-user-card {
-  margin: 14px 16px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 14px;
+/* User Profile Glass Card */
+.sidebar-user-card,
+.user-card {
+  margin: 12px 14px 16px 14px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-user-card:hover,
+.user-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .user-card-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 9px;
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -168,18 +177,22 @@ body {
   font-size: 0.95rem;
   color: #ffffff;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .user-card-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .user-card-name {
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #ffffff;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -189,7 +202,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .status-dot {
@@ -198,33 +211,40 @@ body {
   border-radius: 50%;
   background: #34d399;
   box-shadow: 0 0 8px #34d399;
+  flex-shrink: 0;
 }
 
 .status-text {
-  font-size: 0.68rem;
-  color: #94a3b8;
-  font-weight: 500;
+  font-size: 0.65rem;
+  color: #a7f3d0;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-logout-btn {
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
   border-radius: 8px;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--transition-fast);
   flex-shrink: 0;
+  text-decoration: none;
+  transition: all 0.2s ease;
 }
 
 .user-logout-btn:hover {
-  background: #ef4444;
+  background: #dc2626;
+  border-color: #dc2626;
   color: #ffffff;
-  border-color: #ef4444;
   transform: scale(1.05);
 }
 
@@ -1310,36 +1330,62 @@ body {
   justify-content: space-between;
 }
 
-/* Real Native Text Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) */
+/* Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) */
 .syahadah-arabic-calligraphy {
   text-align: center;
-  margin-top: 2mm;
-  margin-bottom: 2.5mm;
+  margin-top: 1mm;
+  margin-bottom: 2mm;
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 52px;
 }
 
 .syahadah-arabic-calligraphy .arabic-quran-text {
-  font-family: 'Amiri Quran', 'Amiri', 'Traditional Arabic', serif;
-  font-size: 27pt;
-  font-weight: 700;
-  line-height: 1.4;
-  color: #0b3d2c;
   direction: rtl;
-  letter-spacing: 0.5px;
+  color: #0b3d2c;
   display: inline-block;
   user-select: all;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
+/* Katibeh: Font Kaligrafi Berseni Tinggi, Melengkung Luwes & Megah */
+.syahadah-arabic-calligraphy .font-katibeh {
+  font-family: 'Katibeh', cursive, serif;
+  font-size: 38pt;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 1px;
+  word-spacing: 4px;
+}
+
+/* Aref Ruq'ah: Khat Ruq'ah Klasik Berkarakter Tegas & Tajam */
+.syahadah-arabic-calligraphy .font-ruqaa {
+  font-family: 'Aref Ruqaa', cursive, serif;
+  font-size: 30pt;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.8px;
+  word-spacing: 3px;
+}
+
+/* Amiri: Khat Naskh Mushaf */
+.syahadah-arabic-calligraphy .font-amiri {
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  font-size: 26pt;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* Original Scan HD */
+.syahadah-arabic-calligraphy .khat-img-original,
 .syahadah-arabic-calligraphy img {
   height: 54px;
   max-width: 70%;
   width: auto;
   object-fit: contain;
-  filter: contrast(1.15) brightness(0.95);
+  filter: contrast(1.2) brightness(0.95);
 }
 
 /* Main Title SYAHADAH */

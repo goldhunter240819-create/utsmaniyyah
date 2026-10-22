@@ -17,19 +17,21 @@ $rtqName = !empty($currentUser['rtq_nama']) ? $currentUser['rtq_nama'] : 'Pusat 
     </div>
   </div>
 
-  <div class="user-card" id="userCard">
+  <div class="sidebar-user-card user-card" id="userCard">
     <div class="user-card-avatar">
       <span id="userAvatarChar"><?= htmlspecialchars($userInitial) ?></span>
     </div>
     <div class="user-card-info">
-      <div class="user-card-name" id="currentUserBadge"><?= htmlspecialchars($currentUser['nama'] ?? 'Pengurus RTQ') ?></div>
+      <div class="user-card-name" id="currentUserBadge" title="<?= htmlspecialchars($currentUser['nama'] ?? 'Pengurus RTQ') ?>">
+        <?= htmlspecialchars($currentUser['nama'] ?? 'Pengurus RTQ') ?>
+      </div>
       <div class="user-card-status">
         <span class="status-dot"></span>
         <span class="status-text"><?= htmlspecialchars($currentUser['role'] ?? 'PENGURUS') ?></span>
       </div>
     </div>
-    <a href="logout.php" class="user-logout-btn" title="Keluar dari Sistem" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+    <a href="logout.php" class="user-logout-btn" title="Keluar dari Sistem">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
     </a>
   </div>
 
