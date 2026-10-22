@@ -123,9 +123,50 @@ try {
     if ($periodeCount === 0) {
         $pdo->exec("
             INSERT INTO `periode` (`id`, `tahun_pelajaran`, `tanggal_h`, `tanggal_m`, `tanggal_syahadah`, `titimangsa`, `is_active`) VALUES
-            (1, '2025 M / 1447 H', '14 Rabi\'ul Awwal 1447 H', '07 September 2025 M', '21 September 2025', 'Tambak Jaya, 07 September 2025', 1),
-            (2, '2026 M / 1448 H', 'Rabi\'ul Awwal 1448 H', 'September 2026 M', 'September 2026', 'Tambak Jaya, September 2026', 0);
+            (1, '2026 M / 1448 H', '21 Rabi\'ul Akhir 1448 H', '04 Oktober 2026 M', '25 Oktober 2026', 'Tambak Jaya, 25 Oktober 2026', 1);
         ");
+    }
+
+    // Migrasi Otomatis: Pastikan seluruh santri terhubung ke periode 2026 M / 1448 H dan hapus periode lama (2025)
+    try {
+        $stmtCheck26 = $pdo->query("SELECT id FROM `periode` WHERE `tahun_pelajaran` LIKE '%2026%' LIMIT 1");
+        $p26Row = $stmtCheck26->fetch(PDO::FETCH_ASSOC);
+
+        if ($p26Row) {
+            $p26Id = (int)$p26Row['id'];
+            // Perbarui data tanggal periode 2026 sesuai tanggal resmi
+            $stmtUp26 = $pdo->prepare("
+                UPDATE `periode` 
+                SET `tahun_pelajaran` = '2026 M / 1448 H',
+                    `tanggal_h` = '21 Rabi\'ul Akhir 1448 H',
+                    `tanggal_m` = '04 Oktober 2026 M',
+                    `tanggal_syahadah` = '25 Oktober 2026',
+                    `titimangsa` = 'Tambak Jaya, 25 Oktober 2026',
+                    `is_active` = 1
+                WHERE `id` = ?
+            ");
+            $stmtUp26->execute([$p26Id]);
+
+            // Hubungkan seluruh data santri ke periode 2026 ini
+            $pdo->exec("UPDATE `santri` SET `periode_id` = $p26Id");
+
+            // Hapus periode lama (2025)
+            $pdo->exec("DELETE FROM `periode` WHERE `id` != $p26Id AND `tahun_pelajaran` LIKE '%2025%'");
+        } else {
+            // Jika hanya ada 1 periode lama, langsung ubah menjadi 2026
+            $pdo->exec("
+                UPDATE `periode` 
+                SET `tahun_pelajaran` = '2026 M / 1448 H',
+                    `tanggal_h` = '21 Rabi\'ul Akhir 1448 H',
+                    `tanggal_m` = '04 Oktober 2026 M',
+                    `tanggal_syahadah` = '25 Oktober 2026',
+                    `titimangsa` = 'Tambak Jaya, 25 Oktober 2026',
+                    `is_active` = 1
+                LIMIT 1
+            ");
+        }
+    } catch (Exception $e) {
+        // Abaikan error migrasi jika sudah tersinkronisasi
     }
 
     // 3. Seed Akun Pengguna jika masih kosong

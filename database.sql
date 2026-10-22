@@ -114,8 +114,7 @@ INSERT INTO `rtq` (`id`, `kode`, `nama`, `alamat`, `kepala_rtq`, `ketua_penguji`
 
 -- 3. Periode Ujian
 INSERT INTO `periode` (`id`, `tahun_pelajaran`, `tanggal_h`, `tanggal_m`, `tanggal_syahadah`, `titimangsa`, `is_active`) VALUES
-(1, '2025 M / 1447 H', '14 Rabi\'ul Awwal 1447 H', '07 September 2025 M', '21 September 2025', 'Tambak Jaya, 07 September 2025', 1),
-(2, '2026 M / 1448 H', 'Rabi\'ul Awwal 1448 H', 'September 2026 M', 'September 2026', 'Tambak Jaya, September 2026', 0);
+(1, '2026 M / 1448 H', '21 Rabi\'ul Akhir 1448 H', '04 Oktober 2026 M', '25 Oktober 2026', 'Tambak Jaya, 25 Oktober 2026', 1);
 
 -- 4. Pengurus & Akun Terisolasi
 INSERT INTO `users` (`id`, `username`, `password`, `nama`, `role`, `rtq_id`) VALUES

@@ -40,23 +40,15 @@
   "daftarPeriode": [
     {
       "id": 1,
-      "tahunPelajaran": "2025 M / 1447 H",
-      "tanggalH": "14 Rabi'ul Awwal 1447 H",
-      "tanggalM": "07 September 2025 M",
-      "tanggalSyahadah": "21 September 2025",
-      "titimangsa": "Tambak Jaya, 07 September 2025"
-    },
-    {
-      "id": 2,
       "tahunPelajaran": "2026 M / 1448 H",
-      "tanggalH": "Rabi'ul Awwal 1448 H",
-      "tanggalM": "September 2026 M",
-      "tanggalSyahadah": "September 2026",
-      "titimangsa": "Tambak Jaya, September 2026"
+      "tanggalH": "21 Rabi'ul Akhir 1448 H",
+      "tanggalM": "04 Oktober 2026 M",
+      "tanggalSyahadah": "25 Oktober 2026",
+      "titimangsa": "Tambak Jaya, 25 Oktober 2026"
     }
   ],
   "activeRtq": "RTQ Utsmaniyyah I",
-  "activePeriode": "2025 M / 1447 H",
+  "activePeriode": "2026 M / 1448 H",
   "santri": [
     {
       "id": 1,
