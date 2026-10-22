@@ -1310,14 +1310,28 @@ body {
   justify-content: space-between;
 }
 
-/* Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) */
+/* Real Native Text Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) */
 .syahadah-arabic-calligraphy {
   text-align: center;
   margin-top: 2mm;
-  margin-bottom: 2mm;
+  margin-bottom: 2.5mm;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.syahadah-arabic-calligraphy .arabic-quran-text {
+  font-family: 'Amiri Quran', 'Amiri', 'Traditional Arabic', serif;
+  font-size: 27pt;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #0b3d2c;
+  direction: rtl;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  user-select: all;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 .syahadah-arabic-calligraphy img {

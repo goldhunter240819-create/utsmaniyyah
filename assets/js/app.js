@@ -1202,9 +1202,9 @@ function renderSyahadahDepan(s, opts = {}) {
       </div>
 
       <div class="syahadah-inner-content">
-        <!-- 1. Arabic Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) -->
-        <div class="syahadah-arabic-calligraphy">
-          <img src="assets/images/arabic_header_syahadah.png" alt="وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا" />
+        <!-- 1. Arabic Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) - Teks Asli Vektor -->
+        <div class="syahadah-arabic-calligraphy" dir="rtl" lang="ar">
+          <span class="arabic-quran-text">وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا</span>
         </div>
 
         <!-- 2. Main Title -->
