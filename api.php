@@ -390,13 +390,40 @@ try {
             $tanggal_syahadah = trim($data['tanggal_syahadah'] ?? '');
             $titimangsa = trim($data['titimangsa'] ?? '');
 
+            if (empty($tahun)) {
+                echo json_encode(['status' => 'error', 'message' => 'Tahun Pelajaran wajib diisi.']);
+                break;
+            }
+
             if ($id) {
-                $stmt = $pdo->prepare("UPDATE `periode` SET `tahun_pelajaran`=?, `tanggal_h`=?, `tanggal_m`=?, `tanggal_syahadah`=?, `titimangsa`=? WHERE `id`=?");
-                $stmt->execute([$tahun, $tanggal_h, $tanggal_m, $tanggal_syahadah, $titimangsa, $id]);
+                // Cek apakah nama tahun pelajaran ini sudah dipakai baris periode lain
+                $check = $pdo->prepare("SELECT id FROM `periode` WHERE `tahun_pelajaran`=? AND id != ?");
+                $check->execute([$tahun, $id]);
+                $dup = $check->fetch(PDO::FETCH_ASSOC);
+                if ($dup) {
+                    // Update periode yang sudah ada tersebut agar tidak terjadi duplicate key error
+                    $stmt = $pdo->prepare("UPDATE `periode` SET `tanggal_h`=?, `tanggal_m`=?, `tanggal_syahadah`=?, `titimangsa`=? WHERE `id`=?");
+                    $stmt->execute([$tanggal_h, $tanggal_m, $tanggal_syahadah, $titimangsa, $dup['id']]);
+                    $id = $dup['id'];
+                } else {
+                    $stmt = $pdo->prepare("UPDATE `periode` SET `tahun_pelajaran`=?, `tanggal_h`=?, `tanggal_m`=?, `tanggal_syahadah`=?, `titimangsa`=? WHERE `id`=?");
+                    $stmt->execute([$tahun, $tanggal_h, $tanggal_m, $tanggal_syahadah, $titimangsa, $id]);
+                }
             } else {
-                $stmt = $pdo->prepare("INSERT INTO `periode` (`tahun_pelajaran`, `tanggal_h`, `tanggal_m`, `tanggal_syahadah`, `titimangsa`) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$tahun, $tanggal_h, $tanggal_m, $tanggal_syahadah, $titimangsa]);
-                $id = $pdo->lastInsertId();
+                // Cek apakah tahun pelajaran sudah ada di database saat penambahan baru
+                $check = $pdo->prepare("SELECT id FROM `periode` WHERE `tahun_pelajaran`=?");
+                $check->execute([$tahun]);
+                $existing = $check->fetch(PDO::FETCH_ASSOC);
+                if ($existing) {
+                    // Update data periode yang sudah ada
+                    $stmt = $pdo->prepare("UPDATE `periode` SET `tanggal_h`=?, `tanggal_m`=?, `tanggal_syahadah`=?, `titimangsa`=? WHERE `id`=?");
+                    $stmt->execute([$tanggal_h, $tanggal_m, $tanggal_syahadah, $titimangsa, $existing['id']]);
+                    $id = $existing['id'];
+                } else {
+                    $stmt = $pdo->prepare("INSERT INTO `periode` (`tahun_pelajaran`, `tanggal_h`, `tanggal_m`, `tanggal_syahadah`, `titimangsa`) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->execute([$tahun, $tanggal_h, $tanggal_m, $tanggal_syahadah, $titimangsa]);
+                    $id = $pdo->lastInsertId();
+                }
             }
 
             echo json_encode(['status' => 'success', 'periode_id' => $id]);

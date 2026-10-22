@@ -1525,8 +1525,8 @@ body {
    ==================================================================== */
 
 .syahadah-page-belakang .syahadah-inner-content {
-  padding: 13mm 16mm 12mm 16mm;
-  justify-content: flex-start;
+  padding: 14mm 16mm 14mm 16mm;
+  justify-content: space-between;
   display: flex;
   flex-direction: column;
 }
@@ -1534,20 +1534,20 @@ body {
 .transkrip-header-official {
   text-align: center;
   margin-top: 1mm;
-  margin-bottom: 4mm;
+  margin-bottom: 5mm;
 }
 
 .transkrip-header-official h2 {
-  font-size: 13.5pt;
+  font-size: 15pt;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   color: #111;
-  margin: 0 0 2px 0;
+  margin: 0 0 3px 0;
 }
 
 .transkrip-header-official h3 {
-  font-size: 10.5pt;
+  font-size: 11.5pt;
   font-weight: 700;
   color: #222;
   margin: 0;
@@ -1555,13 +1555,13 @@ body {
 
 .transkrip-bio-table {
   width: 100%;
-  margin-bottom: 4mm;
-  font-size: 10pt;
+  margin-bottom: 5mm;
+  font-size: 11pt;
   border-collapse: collapse;
 }
 
 .transkrip-bio-table td {
-  padding: 1.5px 4px;
+  padding: 3px 5px;
   vertical-align: top;
 }
 
@@ -1578,7 +1578,7 @@ body {
 
 .tb-val {
   width: 69%;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .tb-val-name {
@@ -1586,25 +1586,27 @@ body {
   text-transform: uppercase;
 }
 
-/* Transkrip Table */
+/* Transkrip Table - Proporsional, Elegan & Mengisi Halaman */
 .transkrip-grades-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 9.5pt;
-  margin-bottom: 4.5mm;
+  font-size: 10.5pt;
+  margin-bottom: 5mm;
 }
 
 .transkrip-grades-table th, .transkrip-grades-table td {
-  border: 1.2px solid #222;
-  padding: 4.5px 8px;
+  border: 1.3px solid #111;
+  padding: 6.5px 10px;
 }
 
 .transkrip-grades-table th {
-  background: #f8fafc;
+  background: #f0fdf4;
   font-weight: 800;
   text-align: center;
   text-transform: uppercase;
-  color: #111;
+  color: #14532d;
+  letter-spacing: 0.5px;
+  padding: 7.5px 10px;
 }
 
 .th-no { width: 8%; }
@@ -1613,42 +1615,47 @@ body {
 .th-angka { width: 16%; }
 .th-huruf { width: 34%; }
 
-.td-no { text-align: center; font-weight: 700; }
-.td-materi { font-weight: 600; }
-.td-angka { text-align: center; font-weight: 800; }
-.td-huruf { font-weight: 600; font-size: 8.5pt; }
+.td-no { text-align: center; font-weight: 700; font-size: 10.5pt; }
+.td-materi { font-weight: 600; font-size: 10.5pt; }
+.td-angka { text-align: center; font-weight: 800; font-size: 11.5pt; }
+.td-huruf { font-weight: 600; font-size: 9.5pt; }
 
 .tr-total {
   font-weight: 800;
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 
 .td-total-lbl {
   text-align: center;
   font-weight: 800;
-  letter-spacing: 1px;
+  font-size: 11pt;
+  letter-spacing: 1.5px;
+  padding: 8.5px 10px;
 }
 
 .td-total-val {
-  font-weight: 800;
-  font-size: 10.5pt;
+  font-weight: 900;
+  font-size: 12pt;
+  color: #14532d;
+  padding: 8.5px 10px;
 }
 
 .td-total-terbilang {
   font-weight: 800;
-  font-size: 9pt;
+  font-size: 10pt;
+  padding: 8.5px 10px;
 }
 
 /* Transkrip Footer Signatures */
 .transkrip-footer-block {
-  margin-top: auto;
+  margin-top: 4mm;
   padding-bottom: 1mm;
 }
 
 .transkrip-date-line {
   text-align: right;
-  font-size: 10pt;
-  margin-bottom: 5px;
+  font-size: 10.5pt;
+  margin-bottom: 6px;
   font-weight: 600;
 }
 
@@ -1658,10 +1665,10 @@ body {
 }
 
 .sig-col-box {
-  width: 60mm;
+  width: 65mm;
   text-align: center;
   position: relative;
-  font-size: 10pt;
+  font-size: 10.5pt;
 }
 
 .sig-col-title {
@@ -1682,13 +1689,13 @@ body {
 }
 
 .sig-col-name {
-  font-size: 10.5pt;
+  font-size: 11pt;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .sig-empty-space {
-  height: 55px;
+  height: 60px;
 }
 
 /* Rekap Nilai Landscape Page */
