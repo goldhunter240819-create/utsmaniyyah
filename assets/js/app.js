@@ -997,6 +997,193 @@ function previewSingleCetak(santriId, docType) {
 }
 
 // -------------------------------------------------------------
+// PURE CODE VECTOR SVG ISLAMIC CERTIFICATE FRAME
+// -------------------------------------------------------------
+let _cachedSyahadahVectorSvg = null;
+function getSyahadahVectorFrameSvg() {
+  if (_cachedSyahadahVectorSvg) return _cachedSyahadahVectorSvg;
+
+  _cachedSyahadahVectorSvg = `
+  <svg class="syahadah-vector-frame" viewBox="0 0 1000 1414" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Metallic Gold Gradient -->
+      <linearGradient id="goldL" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#946b19"/>
+        <stop offset="18%" stop-color="#d4af37"/>
+        <stop offset="38%" stop-color="#fae79d"/>
+        <stop offset="52%" stop-color="#fff8d6"/>
+        <stop offset="70%" stop-color="#d4af37"/>
+        <stop offset="88%" stop-color="#aa771c"/>
+        <stop offset="100%" stop-color="#7a520e"/>
+      </linearGradient>
+
+      <!-- Royal Islamic Emerald Green Gradient -->
+      <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#042016"/>
+        <stop offset="30%" stop-color="#0b3d2c"/>
+        <stop offset="50%" stop-color="#145d44"/>
+        <stop offset="70%" stop-color="#0b3d2c"/>
+        <stop offset="100%" stop-color="#031810"/>
+      </linearGradient>
+
+      <!-- Gold Radial Glow for Rosettes & Medallions -->
+      <radialGradient id="goldRadial" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fff9d4"/>
+        <stop offset="35%" stop-color="#ebd06c"/>
+        <stop offset="75%" stop-color="#b8860b"/>
+        <stop offset="100%" stop-color="#6e4c08"/>
+      </radialGradient>
+
+      <!-- 8-Pointed Star (Rub el Hizb / Khatam Sulaiman) -->
+      <g id="star8">
+        <polygon points="0,-18 12.7,-12.7 18,0 12.7,12.7 0,18 -12.7,12.7 -18,0 -12.7,-12.7" fill="url(#goldL)" stroke="#6e4c08" stroke-width="0.8"/>
+        <polygon points="0,-12 8.5,-8.5 12,0 8.5,8.5 0,12 -8.5,8.5 -12,0 -8.5,-8.5" fill="#0b3d2c" stroke="url(#goldL)" stroke-width="0.8"/>
+        <circle cx="0" cy="0" r="4.2" fill="url(#goldRadial)" stroke="#80560a" stroke-width="0.6"/>
+      </g>
+
+      <!-- Repeating Geometric Border Pattern (Horizontal) -->
+      <pattern id="islamicChainH" width="24" height="12" patternUnits="userSpaceOnUse">
+        <path d="M 0 6 L 6 0 L 12 6 L 6 12 Z M 12 6 L 18 0 L 24 6 L 18 12 Z" fill="none" stroke="url(#goldL)" stroke-width="0.85"/>
+        <circle cx="6" cy="6" r="1.5" fill="#d4af37"/>
+        <circle cx="18" cy="6" r="1.5" fill="#d4af37"/>
+        <polygon points="12,2 14.5,6 12,10 9.5,6" fill="#0c4331"/>
+      </pattern>
+
+      <!-- Repeating Geometric Border Pattern (Vertical) -->
+      <pattern id="islamicChainV" width="12" height="24" patternUnits="userSpaceOnUse">
+        <path d="M 6 0 L 0 6 L 6 12 L 12 6 Z M 6 12 L 0 18 L 6 24 L 12 18 Z" fill="none" stroke="url(#goldL)" stroke-width="0.85"/>
+        <circle cx="6" cy="6" r="1.5" fill="#d4af37"/>
+        <circle cx="6" cy="18" r="1.5" fill="#d4af37"/>
+        <polygon points="2,12 6,14.5 10,12 6,9.5" fill="#0c4331"/>
+      </pattern>
+
+      <!-- Intricate Islamic Corner Bracket Motif (Top-Left) -->
+      <g id="cornerOrnament">
+        <!-- Translucent Emerald Corner Fan Backdrop -->
+        <path d="M 18 18 L 125 18 C 110 32, 95 48, 85 70 C 75 92, 70 110, 70 125 L 18 125 Z" fill="url(#emeraldGrad)" opacity="0.18"/>
+        
+        <!-- Scalloped Arabesque Arcs with Gold Pinstriping -->
+        <path d="M 28 88 C 38 88, 50 78, 50 66 C 50 54, 62 46, 74 46 C 86 46, 94 36, 94 26" fill="none" stroke="url(#goldL)" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M 28 118 C 50 118, 68 100, 68 78 C 68 56, 86 42, 118 28" fill="none" stroke="url(#goldL)" stroke-width="1.8" stroke-dasharray="4 2"/>
+
+        <!-- Flowing Arabesque Tendrils & Botanical Curls -->
+        <path d="M 28 48 C 38 48, 48 38, 48 28" fill="none" stroke="url(#goldL)" stroke-width="2"/>
+        <path d="M 48 28 C 54 22, 54 34, 48 28 Z" fill="url(#goldRadial)"/>
+        
+        <path d="M 72 88 C 82 78, 90 70, 102 70 C 114 70, 122 62, 122 48" fill="none" stroke="url(#goldL)" stroke-width="1.5"/>
+        <circle cx="122" cy="48" r="3.2" fill="url(#goldRadial)"/>
+        
+        <path d="M 88 72 C 78 82, 70 90, 70 102 C 70 114, 62 122, 48 122" fill="none" stroke="url(#goldL)" stroke-width="1.5"/>
+        <circle cx="48" cy="122" r="3.2" fill="url(#goldRadial)"/>
+
+        <!-- Prominent Corner 8-Pointed Star -->
+        <g transform="translate(64, 64) scale(1.65)">
+          <use href="#star8"/>
+        </g>
+        
+        <!-- Satellite Stars -->
+        <g transform="translate(122, 30) scale(0.75)">
+          <use href="#star8"/>
+        </g>
+        <g transform="translate(30, 122) scale(0.75)">
+          <use href="#star8"/>
+        </g>
+      </g>
+
+      <!-- Top Center Mihrab Arch Crown Crest -->
+      <g id="topCrest">
+        <path d="M -115 0 C -95 -16, -65 -28, -32 -36 C -14 -42, 0 -54, 0 -54 C 0 -54, 14 -42, 32 -36 C 65 -28, 95 -16, 115 0 Z" fill="url(#emeraldGrad)" stroke="url(#goldL)" stroke-width="2.6"/>
+        <path d="M -94 -3 C -78 -16, -52 -24, -26 -30 C -11 -34, 0 -45, 0 -45 C 0 -45, 11 -34, 26 -30 C 52 -24, 78 -16, 94 -3" fill="none" stroke="url(#goldL)" stroke-width="1.3"/>
+        <g transform="translate(0, -25) scale(0.95)">
+          <use href="#star8"/>
+        </g>
+        <polygon points="0,-60 -4,-53 0,-49 4,-53" fill="url(#goldL)"/>
+        <circle cx="0" cy="-62" r="2.8" fill="url(#goldRadial)"/>
+      </g>
+
+      <!-- Bottom Center Medallion Crest -->
+      <g id="bottomCrest">
+        <path d="M -105 0 C -85 14, -58 24, -28 30 C -11 34, 0 45, 0 45 C 0 45, 11 34, 28 30 C 58 24, 85 14, 105 0 Z" fill="url(#emeraldGrad)" stroke="url(#goldL)" stroke-width="2.6"/>
+        <path d="M -85 3 C -68 14, -48 20, -22 25 C -9 28, 0 37, 0 37 C 0 37, 9 28, 22 25 C 48 20, 68 14, 85 3" fill="none" stroke="url(#goldL)" stroke-width="1.3"/>
+        <g transform="translate(0, 20) scale(0.95)">
+          <use href="#star8"/>
+        </g>
+        <circle cx="0" cy="52" r="2.8" fill="url(#goldRadial)"/>
+      </g>
+
+      <!-- Side Midpoint Rosettes -->
+      <g id="sideMedallion">
+        <path d="M 0 -38 C 11 -22, 17 -11, 17 0 C 17 11, 11 22, 0 38 C -11 22, -17 11, -17 0 C -17 -11, -11 -22, 0 -38 Z" fill="url(#emeraldGrad)" stroke="url(#goldL)" stroke-width="1.8"/>
+        <g transform="scale(0.88)">
+          <use href="#star8"/>
+        </g>
+      </g>
+    </defs>
+
+    <!-- Base Frame Background -->
+    <rect x="0" y="0" width="1000" height="1414" fill="none"/>
+
+    <!-- Layer 1: Outermost Gold Hairline -->
+    <rect x="14" y="14" width="972" height="1386" rx="5" fill="none" stroke="url(#goldL)" stroke-width="2.2"/>
+
+    <!-- Layer 2: Royal Emerald Wide Band (14px) with Center Gold Dash -->
+    <rect x="23" y="23" width="954" height="1368" rx="4" fill="none" stroke="url(#emeraldGrad)" stroke-width="14"/>
+    <rect x="23" y="23" width="954" height="1368" rx="4" fill="none" stroke="url(#goldL)" stroke-width="1.2" stroke-dasharray="10 5"/>
+
+    <!-- Layer 3: Gold Separator Line -->
+    <rect x="34" y="34" width="932" height="1346" rx="3" fill="none" stroke="url(#goldL)" stroke-width="2.2"/>
+
+    <!-- Layer 4: Islamic Geometric Frieze Pattern Bands (Top, Bottom, Left, Right) -->
+    <rect x="124" y="38" width="752" height="12" fill="url(#islamicChainH)"/>
+    <rect x="124" y="1364" width="752" height="12" fill="url(#islamicChainH)"/>
+    <rect x="38" y="124" width="12" height="1166" fill="url(#islamicChainV)"/>
+    <rect x="950" y="124" width="12" height="1166" fill="url(#islamicChainV)"/>
+
+    <!-- Layer 5: Inner Gold Border with Rounded Edges -->
+    <rect x="54" y="54" width="892" height="1306" rx="3" fill="none" stroke="url(#goldL)" stroke-width="2.5"/>
+
+    <!-- Layer 6: Deep Emerald Inner Hairline -->
+    <rect x="60" y="60" width="880" height="1294" rx="2" fill="none" stroke="#0d4734" stroke-width="1.6"/>
+
+    <!-- Layer 7: Subtle Inset Dotted Gold Line -->
+    <rect x="66" y="66" width="868" height="1282" fill="none" stroke="url(#goldL)" stroke-width="0.9" stroke-dasharray="4 3"/>
+
+    <!-- 4 Corner Ornaments -->
+    <g transform="translate(0, 0)">
+      <use href="#cornerOrnament"/>
+    </g>
+    <g transform="translate(1000, 0) scale(-1, 1)">
+      <use href="#cornerOrnament"/>
+    </g>
+    <g transform="translate(0, 1414) scale(1, -1)">
+      <use href="#cornerOrnament"/>
+    </g>
+    <g transform="translate(1000, 1414) scale(-1, -1)">
+      <use href="#cornerOrnament"/>
+    </g>
+
+    <!-- Top & Bottom Crests -->
+    <g transform="translate(500, 54)">
+      <use href="#topCrest"/>
+    </g>
+    <g transform="translate(500, 1360)">
+      <use href="#bottomCrest"/>
+    </g>
+
+    <!-- Left & Right Midpoint Rosettes -->
+    <g transform="translate(44, 707)">
+      <use href="#sideMedallion"/>
+    </g>
+    <g transform="translate(956, 707)">
+      <use href="#sideMedallion"/>
+    </g>
+  </svg>
+  `;
+
+  return _cachedSyahadahVectorSvg;
+}
+
+// -------------------------------------------------------------
 // 1. SYAHADAH HALAMAN DEPAN (Replikasi Otentik syahadah.pdf)
 // -------------------------------------------------------------
 function renderSyahadahDepan(s, opts = {}) {
@@ -1009,7 +1196,7 @@ function renderSyahadahDepan(s, opts = {}) {
 
   return `
     <div class="a4-page syahadah-page-depan ${showFrame ? 'has-frame' : 'no-frame'}">
-      ${showFrame ? '<div class="syahadah-frame-bg"></div>' : ''}
+      ${showFrame ? `<div class="syahadah-frame-bg">${getSyahadahVectorFrameSvg()}</div>` : ''}
       
       <div class="syahadah-watermark-center">
         <img src="assets/images/logo-yanbua.png" alt="Yanbua Watermark" />
@@ -1128,7 +1315,7 @@ function renderSyahadahBelakang(s, opts = {}) {
 
   return `
     <div class="a4-page syahadah-page-belakang ${showFrame ? 'has-frame' : 'no-frame'}">
-      ${showFrame ? '<div class="syahadah-frame-bg"></div>' : ''}
+      ${showFrame ? `<div class="syahadah-frame-bg">${getSyahadahVectorFrameSvg()}</div>` : ''}
 
       <div class="syahadah-watermark-center">
         <img src="assets/images/logo-yanbua.png" alt="Yanbua Watermark" />

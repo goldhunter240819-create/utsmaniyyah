@@ -1260,7 +1260,7 @@ body {
   break-after: page;
 }
 
-/* Background Frame (Ornamen Hijau Otentik syahadah.pdf) */
+/* Pure Code Vector Islamic Certificate Frame */
 .syahadah-frame-bg {
   position: absolute;
   top: 0;
@@ -1269,11 +1269,15 @@ body {
   bottom: 0;
   width: 100%;
   height: 100%;
-  background-image: url('../images/syahadah_frame.jpg');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
   pointer-events: none;
   z-index: 1;
+  overflow: hidden;
+}
+
+.syahadah-frame-bg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* Watermark Center (Logo Yanbu'a Samudra Hijau) */

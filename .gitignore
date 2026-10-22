@@ -3,6 +3,7 @@
 *.log
 .DS_Store
 Thumbs.db
+scratch/
 
 # If you want to keep original Excel file in Git, leave it untracked or tracked as needed
 # aplikasi.xlsx

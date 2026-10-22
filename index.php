@@ -527,7 +527,7 @@ $currentUser = $_SESSION['current_user'] ?? null;
                 <div style="display: flex; align-items: center; gap: 18px; margin-left: auto; flex-wrap: wrap;">
                   <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; color: var(--dark-700);" title="Centang untuk cetak pada kertas HVS putih atau export PDF. Hilangkan centang jika mencetak di atas kertas blangko bersertifikat resmi.">
                     <input type="checkbox" id="chkShowFrame" checked onchange="generateCetakPreview()">
-                    <span>Bingkai Ornamen Hijau</span>
+                    <span>Bingkai Emas Hijau Vektor (Depan-Belakang)</span>
                   </label>
                   <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; color: var(--dark-700);" title="Sertakan stempel ungu & tanda tangan resmi digital">
                     <input type="checkbox" id="chkShowStamp" checked onchange="generateCetakPreview()">
