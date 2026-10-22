@@ -12,6 +12,10 @@ $currentUser = $_SESSION['current_user'] ?? null;
   <title>Sistem Penilaian Munaqosyah & Cetak Syahadah - RTQ Utsmaniyyah</title>
   <meta name="description" content="Aplikasi Web Sistem Informasi Penilaian Munaqosyah dan Cetak Syahadah RTQ Utsmaniyyah Metode Yanbu'a Lampung Barat.">
   
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
   <!-- Favicon Logo Yanbua PNG Asli Transparan -->
   <link rel="icon" type="image/png" href="assets/images/logo-yanbua.png">
 
@@ -27,8 +31,8 @@ $currentUser = $_SESSION['current_user'] ?? null;
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="assets/css/style.css">
+  <!-- Main Stylesheet with Auto Cache Buster -->
+  <link rel="stylesheet" href="assets/css/style.css?v=<?= time() ?>">
   <style>
     /* Styling Khusus Layar Login */
     .login-wrapper {
@@ -826,7 +830,7 @@ $currentUser = $_SESSION['current_user'] ?? null;
     </div>
   </div>
 
-  <!-- Main JavaScript Logic -->
-  <script src="assets/js/app.js"></script>
+  <!-- Main JavaScript Logic with Auto Cache Buster -->
+  <script src="assets/js/app.js?v=<?= time() ?>"></script>
 </body>
 </html>
