@@ -429,6 +429,66 @@ try {
             echo json_encode(['status' => 'success', 'periode_id' => $id]);
             break;
 
+        // ---------------------------------------------------------
+        // 9. HAPUS PERIODE
+        // ---------------------------------------------------------
+        case 'delete_periode':
+            $data = json_decode(file_get_contents('php://input'), true);
+            $id = (int)($data['id'] ?? 0);
+
+            if ($id <= 0) {
+                echo json_encode(['status' => 'error', 'message' => 'ID periode tidak valid.']);
+                break;
+            }
+
+            // Cek apakah ada santri yang terhubung dengan periode ini
+            $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM `santri` WHERE `periode_id` = ?");
+            $stmtCheck->execute([$id]);
+            $countSantri = (int)$stmtCheck->fetchColumn();
+
+            if ($countSantri > 0) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => "Tidak dapat menghapus periode ini karena masih memiliki $countSantri data santri. Hapus atau pindahkan santri terlebih dahulu."
+                ]);
+                break;
+            }
+
+            $stmt = $pdo->prepare("DELETE FROM `periode` WHERE `id` = ?");
+            $stmt->execute([$id]);
+            echo json_encode(['status' => 'success']);
+            break;
+
+        // ---------------------------------------------------------
+        // 10. HAPUS UNIT RTQ
+        // ---------------------------------------------------------
+        case 'delete_rtq':
+            $data = json_decode(file_get_contents('php://input'), true);
+            $id = (int)($data['id'] ?? 0);
+
+            if ($id <= 0) {
+                echo json_encode(['status' => 'error', 'message' => 'ID RTQ tidak valid.']);
+                break;
+            }
+
+            // Cek apakah ada santri yang terhubung dengan RTQ ini
+            $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM `santri` WHERE `rtq_id` = ?");
+            $stmtCheck->execute([$id]);
+            $countSantri = (int)$stmtCheck->fetchColumn();
+
+            if ($countSantri > 0) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => "Tidak dapat menghapus RTQ ini karena masih memiliki $countSantri data santri. Pindahkan atau hapus santri terlebih dahulu."
+                ]);
+                break;
+            }
+
+            $stmt = $pdo->prepare("DELETE FROM `rtq` WHERE `id` = ?");
+            $stmt->execute([$id]);
+            echo json_encode(['status' => 'success']);
+            break;
+
         default:
             echo json_encode(['status' => 'error', 'message' => 'Aksi tidak dikenal']);
             break;

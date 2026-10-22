@@ -1566,7 +1566,10 @@ function populateConfigTab() {
         <td>${escapeHtml(r.ketua_penguji)}</td>
         <td>${escapeHtml(r.wa || '-')}</td>
         <td class="text-center">
-          <button class="btn btn-outline btn-sm btn-icon" onclick="openEditRtqModal(${r.id})" title="Edit RTQ">✏️</button>
+          <div style="display: flex; gap: 6px; justify-content: center;">
+            <button class="btn btn-outline btn-sm btn-icon" onclick="openEditRtqModal(${r.id})" title="Edit RTQ">✏️</button>
+            <button class="btn btn-outline btn-sm btn-icon" style="color: #dc2626; border-color: #fca5a5;" onclick="confirmDeleteRtq(${r.id})" title="Hapus RTQ">🗑️</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1583,7 +1586,10 @@ function populateConfigTab() {
         <td>${escapeHtml(p.tanggal_syahadah || '-')}</td>
         <td>${escapeHtml(p.titimangsa || '-')}</td>
         <td class="text-center">
-          <button class="btn btn-outline btn-sm btn-icon" onclick="openEditPeriodeModal(${p.id})" title="Edit Periode">✏️</button>
+          <div style="display: flex; gap: 6px; justify-content: center;">
+            <button class="btn btn-outline btn-sm btn-icon" onclick="openEditPeriodeModal(${p.id})" title="Edit Periode">✏️</button>
+            <button class="btn btn-outline btn-sm btn-icon" style="color: #dc2626; border-color: #fca5a5;" onclick="confirmDeletePeriode(${p.id})" title="Hapus Periode">🗑️</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1626,6 +1632,8 @@ function openAddRtqModal() {
   document.getElementById('rtqModalTitle').textContent = 'Tambah Unit RTQ Baru';
   document.getElementById('rtqForm').reset();
   document.getElementById('rtqIdInput').value = '';
+  const delBtn = document.getElementById('btnDeleteRtqModal');
+  if (delBtn) delBtn.style.display = 'none';
   openModal('rtqModal');
 }
 
@@ -1640,7 +1648,47 @@ function openEditRtqModal(id) {
   document.getElementById('inputRtqKepalaModal').value = r.kepala_rtq;
   document.getElementById('inputRtqPengujiModal').value = r.ketua_penguji;
   document.getElementById('inputRtqWaModal').value = r.wa || '';
+  const delBtn = document.getElementById('btnDeleteRtqModal');
+  if (delBtn) delBtn.style.display = 'inline-block';
   openModal('rtqModal');
+}
+
+function deleteRtqFromModal() {
+  const id = document.getElementById('rtqIdInput').value;
+  if (id) {
+    closeModal('rtqModal');
+    confirmDeleteRtq(id);
+  }
+}
+
+async function confirmDeleteRtq(id) {
+  const r = appData.daftarRtq.find(x => x.id == id);
+  if (!r) return;
+  const confirmResult = await SwalAlert.confirm(
+    'Hapus Unit RTQ?',
+    `Yakin ingin menghapus unit RTQ "<strong>${escapeHtml(r.nama)}</strong>" (${escapeHtml(r.kode)})?`,
+    'Ya, Hapus RTQ',
+    true
+  );
+  if (confirmResult.isConfirmed) {
+    try {
+      const res = await fetch('api.php?action=delete_rtq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        await loadDataFromBackend();
+        populateConfigTab();
+        SwalAlert.toast(`Unit RTQ ${r.nama} berhasil dihapus`);
+      } else {
+        SwalAlert.error('Gagal', result.message || 'Gagal menghapus unit RTQ.');
+      }
+    } catch (err) {
+      SwalAlert.error('Kesalahan', 'Gagal menghapus unit RTQ dari database.');
+    }
+  }
 }
 
 async function handleSaveRtq(e) {
@@ -1666,6 +1714,7 @@ async function handleSaveRtq(e) {
     if (result.status === 'success') {
       closeModal('rtqModal');
       await loadDataFromBackend();
+      populateConfigTab();
       SwalAlert.success('Berhasil Disimpan', 'Data Unit RTQ berhasil disimpan!');
     } else {
       SwalAlert.error('Gagal', result.message || 'Gagal menyimpan unit RTQ.');
@@ -1680,6 +1729,8 @@ function openAddPeriodeModal() {
   document.getElementById('periodeModalTitle').textContent = 'Tambah Tahun / Periode Ujian';
   document.getElementById('periodeForm').reset();
   document.getElementById('periodeIdInput').value = '';
+  const delBtn = document.getElementById('btnDeletePeriodeModal');
+  if (delBtn) delBtn.style.display = 'none';
   openModal('periodeModal');
 }
 
@@ -1693,7 +1744,47 @@ function openEditPeriodeModal(id) {
   document.getElementById('inputPeriodeM').value = p.tanggal_m || '';
   document.getElementById('inputPeriodeSyahadah').value = p.tanggal_syahadah || '';
   document.getElementById('inputPeriodeTitimangsa').value = p.titimangsa || '';
+  const delBtn = document.getElementById('btnDeletePeriodeModal');
+  if (delBtn) delBtn.style.display = 'inline-block';
   openModal('periodeModal');
+}
+
+function deletePeriodeFromModal() {
+  const id = document.getElementById('periodeIdInput').value;
+  if (id) {
+    closeModal('periodeModal');
+    confirmDeletePeriode(id);
+  }
+}
+
+async function confirmDeletePeriode(id) {
+  const p = appData.daftarPeriode.find(x => x.id == id);
+  if (!p) return;
+  const confirmResult = await SwalAlert.confirm(
+    'Hapus Periode Ujian?',
+    `Yakin ingin menghapus periode "<strong>${escapeHtml(p.tahun_pelajaran)}</strong>"?`,
+    'Ya, Hapus Periode',
+    true
+  );
+  if (confirmResult.isConfirmed) {
+    try {
+      const res = await fetch('api.php?action=delete_periode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        await loadDataFromBackend();
+        populateConfigTab();
+        SwalAlert.toast(`Periode ${p.tahun_pelajaran} berhasil dihapus`);
+      } else {
+        SwalAlert.error('Gagal', result.message || 'Gagal menghapus periode.');
+      }
+    } catch (err) {
+      SwalAlert.error('Kesalahan', 'Gagal menghapus periode dari database.');
+    }
+  }
 }
 
 async function handleSavePeriode(e) {
@@ -1718,6 +1809,7 @@ async function handleSavePeriode(e) {
     if (result.status === 'success') {
       closeModal('periodeModal');
       await loadDataFromBackend();
+      populateConfigTab();
       SwalAlert.success('Berhasil Disimpan', 'Periode ujian berhasil disimpan!');
     } else {
       SwalAlert.error('Gagal', result.message || 'Gagal menyimpan periode ujian.');

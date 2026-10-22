@@ -618,9 +618,12 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal('rtqModal')">Batal</button>
-          <button type="submit" class="btn btn-primary">Simpan Unit RTQ</button>
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" id="btnDeleteRtqModal" class="btn btn-danger btn-sm" style="display: none;" onclick="deleteRtqFromModal()">Hapus RTQ</button>
+          <div style="display: flex; gap: 8px; margin-left: auto;">
+            <button type="button" class="btn btn-outline" onclick="closeModal('rtqModal')">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan Unit RTQ</button>
+          </div>
         </div>
       </form>
     </div>
@@ -659,9 +662,12 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal('periodeModal')">Batal</button>
-          <button type="submit" class="btn btn-primary">Simpan Periode</button>
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" id="btnDeletePeriodeModal" class="btn btn-danger btn-sm" style="display: none;" onclick="deletePeriodeFromModal()">Hapus Periode</button>
+          <div style="display: flex; gap: 8px; margin-left: auto;">
+            <button type="button" class="btn btn-outline" onclick="closeModal('periodeModal')">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan Periode</button>
+          </div>
         </div>
       </form>
     </div>
