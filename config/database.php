@@ -107,48 +107,55 @@ try {
         // Table or column already modified
     }
 
-    // Pastikan 3 RTQ terdaftar
-    $pdo->exec("
-        INSERT INTO `rtq` (`id`, `kode`, `nama`, `alamat`, `kepala_rtq`, `ketua_penguji`, `wa`) VALUES
-        (1, 'RTQ-U1', 'RTQ Utsmaniyyah I', 'Desa Tambak Jaya Kec. Way Tenong Kab. Lampung Barat', 'Ust. Ahmad Syarif', 'IKHWANUL KIROM', '082184427288'),
-        (2, 'RTQ-U2', 'RTQ Utsmaniyyah II', 'Desa Tambak Jaya Kec. Way Tenong Kab. Lampung Barat', 'Ust. M. Ridwan', 'IKHWANUL KIROM', '082184427288'),
-        (3, 'RTQ-U3', 'RTQ Utsmaniyyah III', 'Jl. Tirtomoyo, No.083, Margorahayu, Desa Tambak Jaya Kec. Way Tenong Kab. Lampung Barat', 'ABU HANIFAN', 'IKHWANUL KIROM', '082184427288')
-        ON DUPLICATE KEY UPDATE `nama`=VALUES(`nama`);
-
-        INSERT INTO `periode` (`id`, `tahun_pelajaran`, `tanggal_h`, `tanggal_m`, `tanggal_syahadah`, `titimangsa`, `is_active`) VALUES
-        (1, '2025 M / 1447 H', '14 Rabi\'ul Awwal 1447 H', '07 September 2025 M', '21 September 2025', 'Tambak Jaya, 07 September 2025', 1),
-        (2, '2026 M / 1448 H', 'Rabi\'ul Awwal 1448 H', 'September 2026 M', 'September 2026', 'Tambak Jaya, September 2026', 0)
-        ON DUPLICATE KEY UPDATE `tahun_pelajaran`=VALUES(`tahun_pelajaran`);
-    ");
-
-    // Perbarui Akun Pengguna sesuai permintaan user:
-    // 1. Developer "Maul" password "Basenglah123."
-    // 2. Admin RTQ 1 "Utsmaniyyah1" password "Utsmaniyyah1"
-    // 3. Admin RTQ 2 "Utsmaniyyah2" password "Utsmaniyyah2"
-    // 4. Admin RTQ 3 "Utsmaniyyah3" password "Utsmaniyyah3"
-    $usersSeed = [
-        ['Maul', 'Basenglah123.', 'Maul (Developer)', 'DEVELOPER', null],
-        ['Utsmaniyyah1', 'Utsmaniyyah1', 'Admin RTQ Utsmaniyyah I', 'PENGURUS_RTQ', 1],
-        ['Utsmaniyyah2', 'Utsmaniyyah2', 'Admin RTQ Utsmaniyyah II', 'PENGURUS_RTQ', 2],
-        ['Utsmaniyyah3', 'Utsmaniyyah3', 'Admin RTQ Utsmaniyyah III', 'PENGURUS_RTQ', 3]
-    ];
-
-    $stmtUser = $pdo->prepare("
-        INSERT INTO `users` (`username`, `password`, `nama`, `role`, `rtq_id`)
-        VALUES (?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE `password`=VALUES(`password`), `nama`=VALUES(`nama`), `role`=VALUES(`role`), `rtq_id`=VALUES(`rtq_id`)
-    ");
-
-    foreach ($usersSeed as $u) {
-        $stmtUser->execute([$u[0], $u[1], $u[2], $u[3], $u[4]]);
+    // 1. Seed RTQ jika masih kosong
+    $rtqCount = (int)$pdo->query("SELECT COUNT(*) FROM `rtq`")->fetchColumn();
+    if ($rtqCount === 0) {
+        $pdo->exec("
+            INSERT INTO `rtq` (`id`, `kode`, `nama`, `alamat`, `kepala_rtq`, `ketua_penguji`, `wa`) VALUES
+            (1, 'RTQ-U1', 'RTQ Utsmaniyyah I', 'Desa Tambak Jaya Kec. Way Tenong Kab. Lampung Barat', 'Ust. Ahmad Syarif', 'IKHWANUL KIROM', '082184427288'),
+            (2, 'RTQ-U2', 'RTQ Utsmaniyyah II', 'Desa Tambak Jaya Kec. Way Tenong Kab. Lampung Barat', 'Ust. M. Ridwan', 'IKHWANUL KIROM', '082184427288'),
+            (3, 'RTQ-U3', 'RTQ Utsmaniyyah III', 'Jl. Tirtomoyo, No.083, Margorahayu, Desa Tambak Jaya Kec. Way Tenong Kab. Lampung Barat', 'ABU HANIFAN', 'IKHWANUL KIROM', '082184427288');
+        ");
     }
 
-    // 5. Seed Lembaga Default
-    $pdo->exec("
-        INSERT INTO `lembaga` (`id`, `nama`, `metode`, `wilayah`, `tingkat`, `pimpinan_lajnah`, `ketua_panitia`, `kkm`) VALUES
-        (1, 'LAJNAH MUROQOBAH LEMBAGA PENDIDIKAN AL-QUR\'AN', 'THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR\'AN YANBU\'A', 'KABUPATEN LAMPUNG BARAT', 'RTQ TINGKAT DASAR', 'SYA\'BUL MUBAROK', 'A. Muslih Abdurrahman', 60.00)
-        ON DUPLICATE KEY UPDATE `kkm`=VALUES(`kkm`);
-    ");
+    // 2. Seed Periode jika masih kosong
+    $periodeCount = (int)$pdo->query("SELECT COUNT(*) FROM `periode`")->fetchColumn();
+    if ($periodeCount === 0) {
+        $pdo->exec("
+            INSERT INTO `periode` (`id`, `tahun_pelajaran`, `tanggal_h`, `tanggal_m`, `tanggal_syahadah`, `titimangsa`, `is_active`) VALUES
+            (1, '2025 M / 1447 H', '14 Rabi\'ul Awwal 1447 H', '07 September 2025 M', '21 September 2025', 'Tambak Jaya, 07 September 2025', 1),
+            (2, '2026 M / 1448 H', 'Rabi\'ul Awwal 1448 H', 'September 2026 M', 'September 2026', 'Tambak Jaya, September 2026', 0);
+        ");
+    }
+
+    // 3. Seed Akun Pengguna jika masih kosong
+    $usersCount = (int)$pdo->query("SELECT COUNT(*) FROM `users`")->fetchColumn();
+    if ($usersCount === 0) {
+        $usersSeed = [
+            ['Maul', 'Basenglah123.', 'Maul (Developer)', 'DEVELOPER', null],
+            ['Utsmaniyyah1', 'Utsmaniyyah1', 'Admin RTQ Utsmaniyyah I', 'PENGURUS_RTQ', 1],
+            ['Utsmaniyyah2', 'Utsmaniyyah2', 'Admin RTQ Utsmaniyyah II', 'PENGURUS_RTQ', 2],
+            ['Utsmaniyyah3', 'Utsmaniyyah3', 'Admin RTQ Utsmaniyyah III', 'PENGURUS_RTQ', 3]
+        ];
+
+        $stmtUser = $pdo->prepare("
+            INSERT INTO `users` (`username`, `password`, `nama`, `role`, `rtq_id`)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+
+        foreach ($usersSeed as $u) {
+            $stmtUser->execute([$u[0], $u[1], $u[2], $u[3], $u[4]]);
+        }
+    }
+
+    // 4. Seed Lembaga jika masih kosong
+    $lembagaCount = (int)$pdo->query("SELECT COUNT(*) FROM `lembaga`")->fetchColumn();
+    if ($lembagaCount === 0) {
+        $pdo->exec("
+            INSERT INTO `lembaga` (`id`, `nama`, `metode`, `wilayah`, `tingkat`, `pimpinan_lajnah`, `ketua_panitia`, `kkm`) VALUES
+            (1, 'LAJNAH MUROQOBAH LEMBAGA PENDIDIKAN AL-QUR\'AN', 'THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR\'AN YANBU\'A', 'KABUPATEN LAMPUNG BARAT', 'RTQ TINGKAT DASAR', 'SYA\'BUL MUBAROK', 'A. Muslih Abdurrahman', 60.00);
+        ");
+    }
 
     // 6. Seed Data Santri & Nilai RTQ 1 Skala Puluhan (0-100) jika masih kosong
     $santriCount = (int)$pdo->query("SELECT COUNT(*) FROM `santri`")->fetchColumn();

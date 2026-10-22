@@ -126,7 +126,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
   setupEventListeners();
   await loadDataFromBackend();
-  switchTab('tab-dashboard');
+  
+  const currentPage = document.body.dataset.page || 'dashboard';
+  const tabMapping = {
+    'dashboard': 'tab-dashboard',
+    'santri': 'tab-santri',
+    'nilai': 'tab-penilaian',
+    'penilaian': 'tab-penilaian',
+    'rekap': 'tab-rekap',
+    'cetak': 'tab-cetak',
+    'pengaturan': 'tab-pengaturan'
+  };
+  const activeTabId = tabMapping[currentPage] || 'tab-dashboard';
+  switchTab(activeTabId);
 });
 
 // Load data dari PHP & MySQL Backend
@@ -139,14 +151,15 @@ async function loadDataFromBackend() {
     const data = await res.json();
     
     if (data.status === 'unauthorized') {
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('mainApp').style.display = 'none';
+      window.location.href = 'login.php';
       return;
     }
 
     if (data.status === 'success') {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainApp').style.display = 'flex';
+      const loginScreen = document.getElementById('loginScreen');
+      if (loginScreen) loginScreen.style.display = 'none';
+      const mainApp = document.getElementById('mainApp');
+      if (mainApp) mainApp.style.display = 'flex';
 
       appData = {
         currentUser: data.currentUser,
@@ -197,8 +210,7 @@ async function handleLogin(e) {
     const result = await res.json();
     if (result.status === 'success') {
       SwalAlert.toast(`Selamat datang, ${result.user.nama}`);
-      await loadDataFromBackend();
-      switchTab('tab-dashboard');
+      window.location.href = 'dashboard.php';
     } else {
       SwalAlert.error('Login Gagal', result.message || 'Periksa kembali username & password.');
     }
@@ -215,16 +227,7 @@ async function handleLogout() {
     'Ya, Keluar'
   );
   if (confirmResult.isConfirmed) {
-    try {
-      await fetch('api.php?action=logout');
-      switchTab('tab-dashboard'); // Reset tab aktif kembali ke Dashboard
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('mainApp').style.display = 'none';
-      document.getElementById('loginForm')?.reset();
-      SwalAlert.toast('Berhasil keluar dari sistem');
-    } catch (err) {
-      location.reload();
-    }
+    window.location.href = 'logout.php';
   }
 }
 
@@ -1682,6 +1685,28 @@ async function confirmDeleteRtq(id) {
         await loadDataFromBackend();
         populateConfigTab();
         SwalAlert.toast(`Unit RTQ ${r.nama} berhasil dihapus`);
+      } else if (result.status === 'has_santri') {
+        const forceRes = await SwalAlert.confirm(
+          'RTQ Masih Berisi Santri',
+          `Unit RTQ "<strong>${escapeHtml(r.nama)}</strong>" masih memiliki <strong>${result.count} data santri</strong>.<br><br>Apakah Anda yakin ingin menghapus unit RTQ ini beserta seluruh data santri di dalamnya?`,
+          'Ya, Hapus Semua Data Terkait',
+          true
+        );
+        if (forceRes.isConfirmed) {
+          const res2 = await fetch('api.php?action=delete_rtq', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, force: true })
+          });
+          const res2Json = await res2.json();
+          if (res2Json.status === 'success') {
+            await loadDataFromBackend();
+            populateConfigTab();
+            SwalAlert.toast(`Unit RTQ ${r.nama} dan seluruh santrinya berhasil dihapus`);
+          } else {
+            SwalAlert.error('Gagal', res2Json.message || 'Gagal menghapus unit RTQ.');
+          }
+        }
       } else {
         SwalAlert.error('Gagal', result.message || 'Gagal menghapus unit RTQ.');
       }
@@ -1778,6 +1803,28 @@ async function confirmDeletePeriode(id) {
         await loadDataFromBackend();
         populateConfigTab();
         SwalAlert.toast(`Periode ${p.tahun_pelajaran} berhasil dihapus`);
+      } else if (result.status === 'has_santri') {
+        const forceRes = await SwalAlert.confirm(
+          'Periode Masih Berisi Santri',
+          `Periode "<strong>${escapeHtml(p.tahun_pelajaran)}</strong>" masih memiliki <strong>${result.count} data santri</strong>.<br><br>Apakah Anda yakin ingin menghapus periode ini beserta seluruh data santri di dalamnya?`,
+          'Ya, Hapus Semua Data Terkait',
+          true
+        );
+        if (forceRes.isConfirmed) {
+          const res2 = await fetch('api.php?action=delete_periode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, force: true })
+          });
+          const res2Json = await res2.json();
+          if (res2Json.status === 'success') {
+            await loadDataFromBackend();
+            populateConfigTab();
+            SwalAlert.toast(`Periode ${p.tahun_pelajaran} dan seluruh santrinya berhasil dihapus`);
+          } else {
+            SwalAlert.error('Gagal', res2Json.message || 'Gagal menghapus periode.');
+          }
+        }
       } else {
         SwalAlert.error('Gagal', result.message || 'Gagal menghapus periode.');
       }
