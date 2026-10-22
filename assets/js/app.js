@@ -1402,14 +1402,11 @@ function renderSyahadahBelakang(s, opts = {}) {
 
         <!-- 4. Signatures Transkrip (Kepala RTQ & Ketua Tim Penguji) -->
         <div class="transkrip-footer-block">
-          <div class="transkrip-date-line">
-            ${escapeHtml(s.titimangsa || "Tambak Jaya, 21 September 2025")}
-          </div>
-
           <div class="transkrip-sigs-cols">
-            <!-- Kepala RTQ -->
+            <!-- Kolom Kiri: Kepala RTQ -->
             <div class="sig-col-box">
-              <div class="sig-col-title">Kepala ${escapeHtml(s.rtq_nama || "RTQ Utsmaniyah")}</div>
+              <div class="sig-col-date-spacer">&nbsp;</div>
+              <div class="sig-col-title">Kepala ${escapeHtml(s.rtq_nama || "RTQ Utsmaniyyah")}</div>
               <div class="sig-stamp-space">
                 ${showStamp ? `
                   <img src="assets/images/stempel_ttd_kepala_rtq.png" class="stamp-transkrip-img" alt="Stempel Kepala RTQ" />
@@ -1420,8 +1417,9 @@ function renderSyahadahBelakang(s, opts = {}) {
               <div class="sig-col-name"><u><strong>${escapeHtml(s.kepala_rtq || "IKHWANUL KIROM")}</strong></u></div>
             </div>
 
-            <!-- Ketua Tim Penguji -->
+            <!-- Kolom Kanan: Titimangsa & Ketua Tim Penguji -->
             <div class="sig-col-box">
+              <div class="sig-col-date">${escapeHtml(s.titimangsa || "Tambak Jaya, 25 Oktober 2026")}</div>
               <div class="sig-col-title">Ketua Tim Penguji</div>
               <div class="sig-stamp-space">
                 ${showStamp ? `

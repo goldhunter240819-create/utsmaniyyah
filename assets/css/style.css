@@ -1713,37 +1713,66 @@ body {
 
 /* Transkrip Footer Signatures */
 .transkrip-footer-block {
-  margin-top: 4mm;
-  padding-bottom: 1mm;
-}
-
-.transkrip-date-line {
-  text-align: right;
-  font-size: 10.5pt;
-  margin-bottom: 6px;
-  font-weight: 600;
+  margin-top: 5mm;
+  padding-bottom: 2mm;
+  width: 100%;
 }
 
 .transkrip-sigs-cols {
   display: flex;
   justify-content: space-between;
+  padding: 0 6mm;
 }
 
 .sig-col-box {
-  width: 65mm;
+  width: 72mm;
   text-align: center;
   position: relative;
   font-size: 10.5pt;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sig-col-date {
+  font-size: 10.5pt;
+  font-weight: 600;
+  margin-bottom: 4px;
+  line-height: 1.35;
+  text-align: center;
+  width: 100%;
+  color: #111;
+}
+
+.sig-col-date-spacer {
+  font-size: 10.5pt;
+  line-height: 1.35;
+  margin-bottom: 4px;
+  visibility: hidden;
+  user-select: none;
 }
 
 .sig-col-title {
+  font-size: 10.5pt;
   font-weight: 700;
   margin-bottom: 4px;
+  text-align: center;
+  width: 100%;
+  color: #111;
+}
+
+.sig-col-box .sig-stamp-space {
+  height: 62px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stamp-transkrip-img {
   position: absolute;
-  top: -12px;
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
   width: 135px;
@@ -1757,6 +1786,14 @@ body {
   font-size: 11pt;
   font-weight: 800;
   text-transform: uppercase;
+  text-align: center;
+  width: 100%;
+  color: #111;
+  letter-spacing: 0.3px;
+}
+
+.sig-col-name u {
+  text-underline-offset: 3px;
 }
 
 .sig-empty-space {
