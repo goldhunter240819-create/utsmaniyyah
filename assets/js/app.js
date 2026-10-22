@@ -958,12 +958,14 @@ function setupCetakTab() {
 function generateCetakPreview() {
   const select = document.getElementById('cetakSantriSelect');
   const docType = document.getElementById('cetakDocTypeSelect')?.value || 'both';
+  const showFrame = document.getElementById('chkShowFrame') ? document.getElementById('chkShowFrame').checked : true;
+  const showStamp = document.getElementById('chkShowStamp') ? document.getElementById('chkShowStamp').checked : true;
   const container = document.getElementById('cetakPreviewArea');
   if (!container) return;
 
   const santriId = parseInt(select?.value, 10);
   if (!santriId) {
-    container.innerHTML = '<div style="color: #fff; text-align: center; padding: 40px;">Pilih santri terlebih dahulu untuk menampilkan pratinjau cetak.</div>';
+    container.innerHTML = '<div style="color: #fff; text-align: center; padding: 40px; font-weight: 600;">Pilih santri terlebih dahulu untuk menampilkan pratinjau cetak.</div>';
     return;
   }
 
@@ -973,10 +975,10 @@ function generateCetakPreview() {
 
   let html = '';
   if (docType === 'depan' || docType === 'both') {
-    html += renderSyahadahDepan(s);
+    html += renderSyahadahDepan(s, { showFrame, showStamp });
   }
   if (docType === 'belakang' || docType === 'both') {
-    html += renderSyahadahBelakang(s);
+    html += renderSyahadahBelakang(s, { showFrame, showStamp });
   }
   if (docType === 'formulir') {
     html += renderFormulirSantri(s);
@@ -994,85 +996,127 @@ function previewSingleCetak(santriId, docType) {
   generateCetakPreview();
 }
 
-// Syahadah Depan Template
-function renderSyahadahDepan(s) {
-  const lbg = appData.lembaga;
+// -------------------------------------------------------------
+// 1. SYAHADAH HALAMAN DEPAN (Replikasi Otentik syahadah.pdf)
+// -------------------------------------------------------------
+function renderSyahadahDepan(s, opts = {}) {
+  const showFrame = opts.showFrame !== undefined ? opts.showFrame : (document.getElementById('chkShowFrame')?.checked ?? true);
+  const showStamp = opts.showStamp !== undefined ? opts.showStamp : (document.getElementById('chkShowStamp')?.checked ?? true);
+  const lbg = appData.lembaga || {};
   const binWord = s.gender === 'P' ? 'Binti' : 'Bin';
   const ayahNama = s.ayah || '-';
+  const noSyahadah = s.no_syahadah || 'LMY-LB/RTQ-U1/001/09/10/2025';
 
   return `
-    <div class="a4-page syahadah-depan">
-      <div class="syahadah-border"></div>
-
-      <div class="syahadah-header">
-        <div class="arabic-bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-        <img src="assets/images/logo-yanbua.png" alt="Logo Yanbu'a" class="syahadah-logo" />
-        <h1 class="syahadah-title">SYAHADAH</h1>
-        <div class="syahadah-subtitle">ROUDLOTU TARBIYATIL QUR'AN</div>
-        <div class="syahadah-subtitle">${escapeHtml(lbg.nama || "LAJNAH MUROQOBAH LEMBAGA PENDIDIKAN AL-QUR'AN")}</div>
-        <div class="syahadah-subtitle">${escapeHtml(lbg.metode || "THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR'AN YANBU'A")}</div>
-        <div class="syahadah-subtitle">${escapeHtml(lbg.wilayah || "KABUPATEN LAMPUNG BARAT")}</div>
-        <div class="syahadah-nomor">Nomor : ${escapeHtml(s.no_syahadah || '-')}</div>
-        <div class="syahadah-divider"></div>
+    <div class="a4-page syahadah-page-depan ${showFrame ? 'has-frame' : 'no-frame'}">
+      ${showFrame ? '<div class="syahadah-frame-bg"></div>' : ''}
+      
+      <div class="syahadah-watermark-center">
+        <img src="assets/images/logo-yanbua.png" alt="Yanbua Watermark" />
       </div>
 
-      <div class="syahadah-body">
-        <p>
-          Setelah mengadakan ujian akhir RTQ tingkat dasar pada tanggal <strong>${escapeHtml(s.tanggal_h || "14 Rabi'ul Awwal 1447 H")} / ${escapeHtml(s.tanggal_m || "07 September 2025 M")}</strong> yang diselenggarakan di <strong>${escapeHtml(s.rtq_nama || "RTQ UTSMANIYYAH III")}</strong> ${escapeHtml(s.rtq_alamat || "")}, maka kami menyatakan bahwa anak yang bernama:
-        </p>
+      <div class="syahadah-inner-content">
+        <!-- 1. Arabic Calligraphy Header (وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا) -->
+        <div class="syahadah-arabic-calligraphy">
+          <img src="assets/images/arabic_header_syahadah.png" alt="وَمَا شَهِدْنَا إِلَّا بِمَا عَلِمْنَا" />
+        </div>
 
-        <table class="santri-bio-table">
+        <!-- 2. Main Title -->
+        <h1 class="syahadah-main-title">SYAHADAH</h1>
+
+        <!-- 3. Sub-headers Lembaga Sesuai Standar Yanbu'a -->
+        <div class="syahadah-instansi-headers">
+          <div class="syahadah-h-sub">ROUDLOTU TARBIYATIL QUR'AN</div>
+          <div class="syahadah-h-sub">${escapeHtml(lbg.nama || "LAJNAH MUROQOBAH LEMBAGA PENDIDIKAN AL-QUR'AN")}</div>
+          <div class="syahadah-h-sub">${escapeHtml(lbg.metode || "THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR'AN YANBU'A")}</div>
+          <div class="syahadah-h-sub">${escapeHtml(lbg.wilayah || "KABUPATEN LAMPUNG BARAT")}</div>
+        </div>
+
+        <!-- 4. Nomor Syahadah & Ribbon Subtitle -->
+        <div class="syahadah-nomor-wrap">
+          <div class="nomor-title">Nomor :</div>
+          <div class="nomor-value">${escapeHtml(noSyahadah)}</div>
+          <div class="nomor-ribbon-sub">THORIQOH BACA TULIS DAN MENGHAFAL AL-QUR'AN</div>
+        </div>
+
+        <!-- 5. Pembuka Narasi -->
+        <div class="syahadah-narasi-opening">
+          Setelah mengadakan ujian akhir RTQ tingkat dasar pada tanggal <strong>${escapeHtml(s.tanggal_h || "14 Rabi'ul Awwal 1447 H")} / ${escapeHtml(s.tanggal_m || "07 September 2025 M")}</strong> yang diselenggarakan di <strong>${escapeHtml(s.rtq_nama || "RTQ UTSMANIYYAH I")}</strong> ${escapeHtml(s.rtq_alamat ? s.rtq_alamat : "")}, maka kami menyatakan bahwa anak yang bernama :
+        </div>
+
+        <!-- 6. Nama Santri (Tampil Menonjol Sesuai Syahadah PDF) -->
+        <div class="syahadah-santri-name-box">
+          ${escapeHtml(s.nama)}
+        </div>
+
+        <!-- 7. Biodata Santri -->
+        <table class="syahadah-bio-table">
           <tr>
-            <td class="label-col">Nama Lengkap</td>
-            <td class="colon-col">:</td>
-            <td class="value-col syahadah-santri-nama">${escapeHtml(s.nama)}</td>
+            <td class="bio-lbl">${binWord}</td>
+            <td class="bio-col">:</td>
+            <td class="bio-val">${escapeHtml(ayahNama)}</td>
           </tr>
           <tr>
-            <td class="label-col">${binWord}</td>
-            <td class="colon-col">:</td>
-            <td class="value-col">${escapeHtml(ayahNama)}</td>
+            <td class="bio-lbl">Tempat / Tanggal Lahir</td>
+            <td class="bio-col">:</td>
+            <td class="bio-val">${escapeHtml(s.ttl || '-')}</td>
           </tr>
           <tr>
-            <td class="label-col">Tempat, Tanggal Lahir</td>
-            <td class="colon-col">:</td>
-            <td class="value-col">${escapeHtml(s.ttl || '-')}</td>
+            <td class="bio-lbl">No Induk Santri</td>
+            <td class="bio-col">:</td>
+            <td class="bio-val">${escapeHtml(s.no_induk || '-')}</td>
           </tr>
           <tr>
-            <td class="label-col">Nomor Induk Santri</td>
-            <td class="colon-col">:</td>
-            <td class="value-col">${escapeHtml(s.no_induk || '-')}</td>
-          </tr>
-          <tr>
-            <td class="label-col">Alamat</td>
-            <td class="colon-col">:</td>
-            <td class="value-col">${escapeHtml(s.alamat || '-')}</td>
+            <td class="bio-lbl">Alamat</td>
+            <td class="bio-col">:</td>
+            <td class="bio-val">${escapeHtml(s.alamat || '-')}</td>
           </tr>
         </table>
 
-        <p>
-          Telah <strong>LULUS</strong> dalam menempuh evaluasi pembelajaran Al-Qur'an tingkat dasar di lembaga Roudlotu Tarbiyatil Qur'an dan sebagai bukti kepadanya diberikan <strong>Syahadah</strong>. Semoga Allah Subhanahu Wa Ta'ala memberinya ilmu yang bermanfaat dan barokah. Aamiin.
-        </p>
-      </div>
+        <!-- 8. Pernyataan Kelulusan -->
+        <div class="syahadah-narasi-closing">
+          Dinyatakan <strong>Khotam dan Lulus</strong> tingkat dasar di lembaga Roudlotu Tarbiyatil Qur'an dan sebagai bukti kepadanya diberikan <strong>Syahadah</strong>. Semoga Allah memberinya ilmu yang bermanfaat. Amin.
+        </div>
 
-      <div class="syahadah-footer">
-        <div class="signature-block">
-          <div class="signature-date">Lampung Barat, ${escapeHtml(s.tanggal_syahadah || "21 September 2025")}</div>
-          <div class="signature-role">Lajnah Muroqobah Yanbu'a</div>
-          <div class="signature-name">${escapeHtml(lbg.pimpinan_lajnah || "SYA'BUL MUBAROK")}</div>
+        <!-- 9. Footer: Pasfoto & TTD Pimpinan Lajnah -->
+        <div class="syahadah-bottom-grid">
+          <div class="syahadah-photo-container">
+            <div class="syahadah-photo-box">
+              <span class="photo-text">Foto 3 x 4</span>
+            </div>
+          </div>
+
+          <div class="syahadah-sig-container">
+            <div class="sig-date">${escapeHtml(s.titimangsa || "Lampung Barat, 21 September 2025")}</div>
+            <div class="sig-role">Lajnah Muroqobah Yanbu'a</div>
+            <div class="sig-stamp-space">
+              ${showStamp ? `
+                <img src="assets/images/stempel_ttd_lajnah.png" class="stamp-lajnah-img" alt="Stempel & TTD" />
+              ` : `
+                <div class="sig-empty-space"></div>
+              `}
+            </div>
+            <div class="sig-name"><u><strong>${escapeHtml(lbg.pimpinan_lajnah || "SYA'BUL MUBAROK")}</strong></u></div>
+          </div>
         </div>
       </div>
     </div>
   `;
 }
 
-// Syahadah Belakang (Transkrip Nilai)
-function renderSyahadahBelakang(s) {
-  const lbg = appData.lembaga;
+// -------------------------------------------------------------
+// 2. SYAHADAH HALAMAN BELAKANG (Transkrip Nilai Otentik)
+// -------------------------------------------------------------
+function renderSyahadahBelakang(s, opts = {}) {
+  const showFrame = opts.showFrame !== undefined ? opts.showFrame : (document.getElementById('chkShowFrame')?.checked ?? true);
+  const showStamp = opts.showStamp !== undefined ? opts.showStamp : (document.getElementById('chkShowStamp')?.checked ?? true);
+  const lbg = appData.lembaga || {};
+  
   const rows = [
-    { no: 1, materi: 'Tartil & Fashohah', val: s.tartil },
+    { no: 1, materi: 'Tartil Fasohah', val: s.tartil },
     { no: 2, materi: 'Ghoroibul Qur\'an', val: s.ghorib },
     { no: 3, materi: 'Ilmu Tajwid', val: s.tajwid },
-    { no: 4, materi: 'Tauhid Dasar', val: s.tauhid },
+    { no: 4, materi: 'Tauhid', val: s.tauhid },
     { no: 5, materi: 'Praktik Wudlu', val: s.wudlu },
     { no: 6, materi: 'Praktik Sholat', val: s.sholat },
     { no: 7, materi: 'Hafalan Surat Pendek', val: s.surat },
@@ -1081,96 +1125,112 @@ function renderSyahadahBelakang(s) {
   ];
 
   const total = s.totalNilai;
-  const rata = s.rataRata;
 
   return `
-    <div class="a4-page syahadah-belakang">
-      <div>
-        <div class="transkrip-header">
+    <div class="a4-page syahadah-page-belakang ${showFrame ? 'has-frame' : 'no-frame'}">
+      ${showFrame ? '<div class="syahadah-frame-bg"></div>' : ''}
+
+      <div class="syahadah-watermark-center">
+        <img src="assets/images/logo-yanbua.png" alt="Yanbua Watermark" />
+      </div>
+
+      <div class="syahadah-inner-content">
+        <!-- 1. Header Transkrip Resmi -->
+        <div class="transkrip-header-official">
           <h2>DAFTAR NILAI UJIAN AKHIR RTQ</h2>
           <h3>TAHUN PELAJARAN ${escapeHtml(s.tahun_pelajaran || "2025 M / 1447 H")}</h3>
         </div>
 
-        <table class="transkrip-bio">
+        <!-- 2. Biodata Santri Nilai -->
+        <table class="transkrip-bio-table">
           <tr>
-            <td style="width: 28%; font-weight: bold;">Nama</td>
-            <td style="width: 2%;">:</td>
-            <td style="width: 70%; font-weight: bold; text-transform: uppercase;">${escapeHtml(s.nama)}</td>
+            <td class="tb-lbl">Nama</td>
+            <td class="tb-col">:</td>
+            <td class="tb-val tb-val-name">${escapeHtml(s.nama)}</td>
           </tr>
           <tr>
-            <td>Tempat, Tanggal Lahir</td>
-            <td>:</td>
-            <td>${escapeHtml(s.ttl || '-')}</td>
+            <td class="tb-lbl">Tempat, Tanggal Lahir</td>
+            <td class="tb-col">:</td>
+            <td class="tb-val">${escapeHtml(s.ttl || '-')}</td>
           </tr>
           <tr>
-            <td>Asal Unit RTQ</td>
-            <td>:</td>
-            <td>${escapeHtml(s.rtq_nama || 'RTQ Utsmaniyyah III')}</td>
+            <td class="tb-lbl">Asal RTQ</td>
+            <td class="tb-col">:</td>
+            <td class="tb-val">${escapeHtml(s.rtq_nama || 'RTQ Utsmaniyyah')}</td>
           </tr>
           <tr>
-            <td>Nomor Induk Santri</td>
-            <td>:</td>
-            <td>${escapeHtml(s.no_induk || '-')}</td>
+            <td class="tb-lbl">Nomor Induk Santri</td>
+            <td class="tb-col">:</td>
+            <td class="tb-val">${escapeHtml(s.no_induk || '-')}</td>
           </tr>
           <tr>
-            <td>Nomor Ujian</td>
-            <td>:</td>
-            <td>${escapeHtml(s.no_ujian || '-')}</td>
+            <td class="tb-lbl">Nomor Ujian</td>
+            <td class="tb-col">:</td>
+            <td class="tb-val">${escapeHtml(s.no_ujian || '-')}</td>
           </tr>
         </table>
 
-        <table class="transkrip-table">
+        <!-- 3. Tabel Nilai 9 Mata Pelajaran Sesuai Syahadah PDF -->
+        <table class="transkrip-grades-table">
           <thead>
             <tr>
-              <th rowspan="2" style="width: 8%;">NO</th>
-              <th rowspan="2" style="width: 42%;">MATA UJIAN</th>
-              <th colspan="2" style="width: 50%;">NILAI</th>
+              <th rowspan="2" class="th-no">NO</th>
+              <th rowspan="2" class="th-materi">MATA UJIAN</th>
+              <th colspan="2" class="th-nilai-group">NILAI</th>
             </tr>
             <tr>
-              <th style="width: 18%;">ANGKA</th>
-              <th style="width: 32%;">HURUF</th>
+              <th class="th-angka">ANGKA</th>
+              <th class="th-huruf">HURUF</th>
             </tr>
           </thead>
           <tbody>
             ${rows.map(r => `
               <tr>
-                <td class="text-center">${r.no}</td>
-                <td>${r.materi}</td>
-                <td class="text-center font-bold">${r.val}</td>
-                <td style="font-size: 8.5pt;">${angkaKeTerbilang(r.val)}</td>
+                <td class="td-no">${r.no}</td>
+                <td class="td-materi">${r.materi}</td>
+                <td class="td-angka">${r.val}</td>
+                <td class="td-huruf">${angkaKeTerbilang(r.val)}</td>
               </tr>
             `).join('')}
-            <tr class="total-row">
-              <td colspan="2" style="text-align: center; font-weight: bold;">JUMLAH</td>
-              <td class="text-center font-bold">${total}</td>
-              <td style="font-size: 8.5pt; font-weight: bold;">${angkaKeTerbilang(total)}</td>
-            </tr>
-            <tr class="total-row">
-              <td colspan="2" style="text-align: center; font-weight: bold;">RATA - RATA</td>
-              <td class="text-center font-bold">${rata}</td>
-              <td style="font-size: 8.5pt; font-weight: bold;">${angkaKeTerbilang(rata)}</td>
+            <tr class="tr-total">
+              <td colspan="2" class="td-total-lbl">JUMLAH</td>
+              <td class="td-angka td-total-val">${total}</td>
+              <td class="td-huruf td-total-terbilang">${angkaKeTerbilang(total)}</td>
             </tr>
           </tbody>
         </table>
-      </div>
 
-      <div>
-        <div style="text-align: right; margin-bottom: 8px; font-size: 10pt;">
-          ${escapeHtml(s.titimangsa || "Tambak Jaya, 07 September 2025")}
-        </div>
-        <div class="transkrip-signatures">
-          <div class="sig-box">
-            <div>Kepala ${escapeHtml(s.rtq_nama || "RTQ Utsmaniyyah III")}</div>
-            <div class="sig-space"></div>
-            <div style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-              ${escapeHtml(s.kepala_rtq || "ABU HANIFAN")}
-            </div>
+        <!-- 4. Signatures Transkrip (Kepala RTQ & Ketua Tim Penguji) -->
+        <div class="transkrip-footer-block">
+          <div class="transkrip-date-line">
+            ${escapeHtml(s.titimangsa || "Tambak Jaya, 21 September 2025")}
           </div>
-          <div class="sig-box">
-            <div>Ketua Tim Penguji</div>
-            <div class="sig-space"></div>
-            <div style="font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-              ${escapeHtml(s.ketua_penguji || "IKHWANUL KIROM")}
+
+          <div class="transkrip-sigs-cols">
+            <!-- Kepala RTQ -->
+            <div class="sig-col-box">
+              <div class="sig-col-title">Kepala ${escapeHtml(s.rtq_nama || "RTQ Utsmaniyah")}</div>
+              <div class="sig-stamp-space">
+                ${showStamp ? `
+                  <img src="assets/images/stempel_ttd_kepala_rtq.png" class="stamp-transkrip-img" alt="Stempel Kepala RTQ" />
+                ` : `
+                  <div class="sig-empty-space"></div>
+                `}
+              </div>
+              <div class="sig-col-name"><u><strong>${escapeHtml(s.kepala_rtq || "IKHWANUL KIROM")}</strong></u></div>
+            </div>
+
+            <!-- Ketua Tim Penguji -->
+            <div class="sig-col-box">
+              <div class="sig-col-title">Ketua Tim Penguji</div>
+              <div class="sig-stamp-space">
+                ${showStamp ? `
+                  <img src="assets/images/stempel_ttd_penguji.png" class="stamp-transkrip-img" alt="Stempel Tim Penguji" />
+                ` : `
+                  <div class="sig-empty-space"></div>
+                `}
+              </div>
+              <div class="sig-col-name"><u><strong>${escapeHtml(s.ketua_penguji || "A. MUSLIH ABDURROHMAN")}</strong></u></div>
             </div>
           </div>
         </div>
@@ -1191,7 +1251,7 @@ function renderFormulirSantri(s) {
 
       <table style="width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 30px;">
         <tr><td style="width: 32%; padding: 7px 4px;">Nama Lengkap</td><td style="width: 3%;">:</td><td style="font-weight: bold; text-transform: uppercase;">${escapeHtml(s.nama)}</td></tr>
-        <tr><td style="padding: 7px 4px;">Jenis Kelamin</td><td>:</td><td>${s.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</td></tr>
+        <tr><td style="padding: 7px 4px;">Jenis Kelamin</td><td>:</td><td>${s.gender === 'P' ? 'Perempuan' : 'Laki-laki'}</td></tr>
         <tr><td style="padding: 7px 4px;">Nama Ayah Kandung</td><td>:</td><td>${escapeHtml(s.ayah || '-')}</td></tr>
         <tr><td style="padding: 7px 4px;">Nama Ibu Kandung</td><td>:</td><td>${escapeHtml(s.ibu || '-')}</td></tr>
         <tr><td style="padding: 7px 4px;">Tempat, Tanggal Lahir</td><td>:</td><td>${escapeHtml(s.ttl || '-')}</td></tr>
@@ -1226,6 +1286,9 @@ function printAllSyahadah(docType = 'both') {
   const container = document.getElementById('cetakPreviewArea');
   if (!container) return;
 
+  const showFrame = document.getElementById('chkShowFrame') ? document.getElementById('chkShowFrame').checked : true;
+  const showStamp = document.getElementById('chkShowStamp') ? document.getElementById('chkShowStamp').checked : true;
+
   const { list } = calculateSantriStats();
   if (list.length === 0) {
     SwalAlert.warning('Pemberitahuan', 'Tidak ada data santri untuk dicetak.');
@@ -1234,8 +1297,8 @@ function printAllSyahadah(docType = 'both') {
 
   let html = '';
   list.forEach(s => {
-    if (docType === 'depan' || docType === 'both') html += renderSyahadahDepan(s);
-    if (docType === 'belakang' || docType === 'both') html += renderSyahadahBelakang(s);
+    if (docType === 'depan' || docType === 'both') html += renderSyahadahDepan(s, { showFrame, showStamp });
+    if (docType === 'belakang' || docType === 'both') html += renderSyahadahBelakang(s, { showFrame, showStamp });
     if (docType === 'formulir') html += renderFormulirSantri(s);
   });
 
