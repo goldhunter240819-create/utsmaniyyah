@@ -465,14 +465,34 @@ function renderDashboard() {
 }
 
 // ==========================================
-// 2. DATA SANTRI
+// 2. DATA SANTRI (DENGAN SORTING REAL-TIME ALA EXCEL)
 // ==========================================
+let santriSortConfig = {
+  column: 'no',
+  direction: 'asc'
+};
+
+function sortSantriTable(column, forceDirection = null) {
+  if (forceDirection) {
+    santriSortConfig.column = column;
+    santriSortConfig.direction = forceDirection;
+  } else {
+    if (santriSortConfig.column === column) {
+      santriSortConfig.direction = santriSortConfig.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      santriSortConfig.column = column;
+      santriSortConfig.direction = 'asc';
+    }
+  }
+  renderSantriTable();
+}
+
 function renderSantriTable() {
   const tbody = document.getElementById('santriTableBody');
   if (!tbody) return;
 
   const q = (document.getElementById('searchSantriInput')?.value || '').toLowerCase();
-  const filtered = appData.santri.filter(s => {
+  let filtered = appData.santri.filter(s => {
     return (s.nama || '').toLowerCase().includes(q) ||
            (s.no_induk || '').toLowerCase().includes(q) ||
            (s.no_ujian || '').toLowerCase().includes(q) ||
@@ -480,6 +500,84 @@ function renderSantriTable() {
            (s.ibu || '').toLowerCase().includes(q) ||
            (s.alamat || '').toLowerCase().includes(q) ||
            (s.rtq_nama || '').toLowerCase().includes(q);
+  });
+
+  // Urutkan data berdasarkan kolom dan arah yang dipilih
+  filtered.sort((a, b) => {
+    let valA, valB;
+    switch (santriSortConfig.column) {
+      case 'no':
+        valA = parseInt(a.no_urut || a.id) || 0;
+        valB = parseInt(b.no_urut || b.id) || 0;
+        return santriSortConfig.direction === 'asc' ? valA - valB : valB - valA;
+      case 'nama':
+        valA = (a.nama || '').trim();
+        valB = (b.nama || '').trim();
+        return santriSortConfig.direction === 'asc' 
+          ? valA.localeCompare(valB, 'id', { sensitivity: 'base' })
+          : valB.localeCompare(valA, 'id', { sensitivity: 'base' });
+      case 'gender':
+        valA = (a.gender || '').trim();
+        valB = (b.gender || '').trim();
+        return santriSortConfig.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      case 'rtq':
+        valA = (a.rtq_nama || a.rtq_kode || '').trim();
+        valB = (b.rtq_nama || b.rtq_kode || '').trim();
+        return santriSortConfig.direction === 'asc' ? valA.localeCompare(valB, 'id') : valB.localeCompare(valA, 'id');
+      case 'ttl':
+        valA = (a.ttl || '').trim();
+        valB = (b.ttl || '').trim();
+        return santriSortConfig.direction === 'asc' ? valA.localeCompare(valB, 'id') : valB.localeCompare(valA, 'id');
+      case 'ayah':
+        valA = (a.ayah || '').trim();
+        valB = (b.ayah || '').trim();
+        return santriSortConfig.direction === 'asc' ? valA.localeCompare(valB, 'id') : valB.localeCompare(valA, 'id');
+      case 'ibu':
+        valA = (a.ibu || '').trim();
+        valB = (b.ibu || '').trim();
+        return santriSortConfig.direction === 'asc' ? valA.localeCompare(valB, 'id') : valB.localeCompare(valA, 'id');
+      case 'alamat':
+        valA = (a.alamat || '').trim();
+        valB = (b.alamat || '').trim();
+        return santriSortConfig.direction === 'asc' ? valA.localeCompare(valB, 'id') : valB.localeCompare(valA, 'id');
+      case 'no_induk':
+        valA = (a.no_induk || '').trim();
+        valB = (b.no_induk || '').trim();
+        return santriSortConfig.direction === 'asc' 
+          ? valA.localeCompare(valB, undefined, { numeric: true })
+          : valB.localeCompare(valA, undefined, { numeric: true });
+      case 'no_ujian':
+        valA = (a.no_ujian || '').trim();
+        valB = (b.no_ujian || '').trim();
+        return santriSortConfig.direction === 'asc' 
+          ? valA.localeCompare(valB, undefined, { numeric: true })
+          : valB.localeCompare(valA, undefined, { numeric: true });
+      case 'no_syahadah':
+        valA = (a.no_syahadah || '').trim();
+        valB = (b.no_syahadah || '').trim();
+        return santriSortConfig.direction === 'asc' 
+          ? valA.localeCompare(valB, undefined, { numeric: true })
+          : valB.localeCompare(valA, undefined, { numeric: true });
+      default:
+        return 0;
+    }
+  });
+
+  // Sinkronkan status aktif tombol panah di header tabel
+  document.querySelectorAll('.sort-arrows-group').forEach(group => {
+    const col = group.getAttribute('data-col');
+    const upBtn = group.querySelector('.arrow-up');
+    const downBtn = group.querySelector('.arrow-down');
+    if (upBtn) upBtn.classList.remove('active');
+    if (downBtn) downBtn.classList.remove('active');
+
+    if (col === santriSortConfig.column) {
+      if (santriSortConfig.direction === 'asc' && upBtn) {
+        upBtn.classList.add('active');
+      } else if (santriSortConfig.direction === 'desc' && downBtn) {
+        downBtn.classList.add('active');
+      }
+    }
   });
 
   if (filtered.length === 0) {

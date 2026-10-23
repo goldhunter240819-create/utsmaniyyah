@@ -923,6 +923,74 @@ body {
   text-align: center;
 }
 
+/* Excel Table Sortable Headers & Buttons */
+.table-excel th.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.table-excel th.th-sortable:hover {
+  background: #145e49 !important;
+}
+
+.table-excel th.th-sortable:active {
+  background: #09382b !important;
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.th-content.center {
+  justify-content: center;
+}
+
+.sort-arrows-group {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sort-arrow {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0;
+  width: 16px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.btn-sort-arrow svg {
+  display: block;
+}
+
+.btn-sort-arrow:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.1);
+}
+
+.btn-sort-arrow.active {
+  background: #f59e0b !important;
+  color: #78350f !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+}
+
 .table-excel td {
   padding: 8px 10px !important;
   border: 1px solid #e2e8f0 !important;
