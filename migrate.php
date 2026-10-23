@@ -60,35 +60,9 @@ try {
 
     echo "<div class='log-item'>ℹ️ ID RTQ-U1: <strong>#{$u1Id}</strong> | ID RTQ-NY: <strong>#{$nyId}</strong></div>";
 
-    // 3. PEMULIHAN DATA SANTRI EDITAN USER (RTQ-NY & RTQ-U1)
-    echo "<h2 style='color: #fbbf24; font-size: 1.2rem; margin-top: 20px;'>🔄 Memulihkan Data Sesuai Editan Manual Pengguna:</h2>";
-    $restoredSantri = [
-        // RTQ-NY (Nurul Yasin Alhidayah)
-        3  => ['rtq_id' => $nyId, 'no_induk' => '260101', 'no_ujian' => '26001', 'no_syahadah' => 'LMY-LB/RTQ-NYAH/001/25/10/2026'],
-        5  => ['rtq_id' => $nyId, 'no_induk' => 'RTQ-NYAH-002', 'no_ujian' => '26002', 'no_syahadah' => 'LMY-LB/RTQ-NYAH/002/25/10/2026'],
-        8  => ['rtq_id' => $nyId, 'no_induk' => 'RTQ-NYAH-003', 'no_ujian' => '26003', 'no_syahadah' => 'LMY-LB/RTQ-NYAH/003/25/10/2026'],
-        9  => ['rtq_id' => $nyId, 'no_induk' => 'RTQ-NYAH-004', 'no_ujian' => '26004', 'no_syahadah' => 'LMY-LB/RTQ-NYAH/004/25/10/2026'],
-
-        // RTQ-U1 (Utsmaniyyah 1)
-        1  => ['rtq_id' => $u1Id, 'no_induk' => '0001', 'no_ujian' => '26001', 'no_syahadah' => 'LMY-LB/RTQ-U1/001/25/10/2026'],
-        2  => ['rtq_id' => $u1Id, 'no_induk' => '0002', 'no_ujian' => '26002', 'no_syahadah' => 'LMY-LB/RTQ-U1/002/25/10/2026'],
-        4  => ['rtq_id' => $u1Id, 'no_induk' => '0004', 'no_ujian' => '26003', 'no_syahadah' => 'LMY-LB/RTQ-U1/004/09/10/2026'],
-        6  => ['rtq_id' => $u1Id, 'no_induk' => '0006', 'no_ujian' => '26004', 'no_syahadah' => 'LMY-LB/RTQ-U1/006/09/10/2026'],
-        7  => ['rtq_id' => $u1Id, 'no_induk' => '0007', 'no_ujian' => '26005', 'no_syahadah' => 'LMY-LB/RTQ-U1/007/09/10/2026'],
-        10 => ['rtq_id' => $u1Id, 'no_induk' => '0010', 'no_ujian' => '26006', 'no_syahadah' => 'LMY-LB/RTQ-U1/010/09/10/2026'],
-        11 => ['rtq_id' => $u1Id, 'no_induk' => '0011', 'no_ujian' => '26007', 'no_syahadah' => 'LMY-LB/RTQ-U1/011/09/10/2026'],
-        12 => ['rtq_id' => $u1Id, 'no_induk' => '0012', 'no_ujian' => '26008', 'no_syahadah' => 'LMY-LB/RTQ-U1/012/09/10/2026']
-    ];
-
-    $updStmt = $pdo->prepare("
-        UPDATE `santri` 
-        SET `rtq_id` = ?, `no_induk` = ?, `no_ujian` = ?, `no_syahadah` = ?
-        WHERE `id` = ?
-    ");
-    foreach ($restoredSantri as $sid => $rData) {
-        $updStmt->execute([$rData['rtq_id'], $rData['no_induk'], $rData['no_ujian'], $rData['no_syahadah'], $sid]);
-        echo "<div class='log-item'>✅ Santri #{$sid} dipulihkan -> RTQ ID: {$rData['rtq_id']} | Induk: {$rData['no_induk']} | Ujian: {$rData['no_ujian']} | Syahadah: {$rData['no_syahadah']}</div>";
-    }
+    // 3. PERLINDUNGAN DATA SANTRI
+    echo "<h2 style='color: #fbbf24; font-size: 1.2rem; margin-top: 20px;'>🔒 Mode Perlindungan Data Aktif:</h2>";
+    echo "<div class='log-item'>🛡️ Seluruh data santri yang sudah ada di database dikunci dan TIDAK AKAN diubah/ditimpa oleh sistem.</div>";
 
     // 4. INSERT HANYA JIKA SANTRI BELUM ADA (INSERT IGNORE)
     $checkExists = $pdo->prepare("SELECT COUNT(*) FROM `santri` WHERE `id` = ?");
