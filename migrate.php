@@ -59,22 +59,22 @@ try {
         [8, 'Zulva Assifa Zahira', 'P', 'Sekincau, 19 April 2011', 'Wahyu Purwanto', 'Siti Khaifah', 'Kebas Kanan, Kec. Sekincau, Kab. Lampung Barat', '0008', '0008', 'LMY-LB/RTQ-U1/008/09/10/2026', 70, 60, 70, 60, 85, 70, 80, 75, 70],
         [9, 'Khanifah Arum Manissa', 'P', 'Penumangan Baru, 07 Agustus 2013', 'Sugeng', 'Suheni', 'Kebas Kanan, Kec. Sekincau, Kab. Lampung Barat', '0009', '0009', 'LMY-LB/RTQ-U1/009/09/10/2026', 90, 60, 55, 55, 60, 55, 65, 55, 60],
         [10, 'Meliyana Okta Sari', 'P', 'Metro, 13 Oktober 2013', 'Suprapto', 'Ita Novianti', 'Desa Tambak Jaya, Sanyir, Margo Rukun, Kec. Way Tenong, Kab. Lampung Barat', '0010', '0010', 'LMY-LB/RTQ-U1/010/09/10/2026', 95, 70, 65, 70, 95, 100, 80, 86, 70],
-        [11, 'Gera Adha Fradeta', 'L', 'Lampung Barat, 07 Oktober 2015', 'Sukanto', 'Dewi Tiarni', 'Desa Tambak Jaya, Sanyir, Margo Mulyo, Kec. Way Tenong, Kab. Lampung Barat', '0011', '0011', 'LMY-LB/RTQ-U1/011/09/10/2026', 85, 60, 65, 65, 100, 95, 75, 65, 57]
+        [11, 'Gera Adha Fradeta', 'L', 'Lampung Barat, 07 Oktober 2015', 'Sukanto', 'Dewi Tiarni', 'Desa Tambak Jaya, Sanyir, Margo Mulyo, Kec. Way Tenong, Kab. Lampung Barat', '0011', '0011', 'LMY-LB/RTQ-U1/011/09/10/2026', 85, 60, 65, 65, 100, 95, 75, 65, 57],
+        [12, 'Vanisha Azwatun Khairunisa', 'P', '-', 'Subandi', '-', 'Tambak Jaya, Kec. Way Tenong, Kab. Lampung Barat', '0012', '0012', 'LMY-LB/RTQ-U1/012/09/10/2026', 60, 45, 59, 80, 45, 60, 48, 80, 59]
     ];
 
     $insSantri = $pdo->prepare("
         INSERT INTO `santri` (`id`, `rtq_id`, `periode_id`, `no_urut`, `nama`, `gender`, `ttl`, `ayah`, `ibu`, `alamat`, `no_induk`, `no_ujian`, `no_syahadah`)
         VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE 
-            `rtq_id` = 1,
             `periode_id` = VALUES(`periode_id`),
             `no_urut` = VALUES(`no_urut`),
             `nama` = VALUES(`nama`),
             `gender` = VALUES(`gender`),
-            `ttl` = VALUES(`ttl`),
-            `ayah` = VALUES(`ayah`),
-            `ibu` = VALUES(`ibu`),
-            `alamat` = VALUES(`alamat`),
+            `ttl` = IF(VALUES(`ttl`) != '-' AND VALUES(`ttl`) != '', VALUES(`ttl`), `ttl`),
+            `ayah` = IF(VALUES(`ayah`) != '-' AND VALUES(`ayah`) != '', VALUES(`ayah`), `ayah`),
+            `ibu` = IF(VALUES(`ibu`) != '-' AND VALUES(`ibu`) != '', VALUES(`ibu`), `ibu`),
+            `alamat` = IF(VALUES(`alamat`) != '-' AND VALUES(`alamat`) != '', VALUES(`alamat`), `alamat`),
             `no_induk` = VALUES(`no_induk`),
             `no_ujian` = VALUES(`no_ujian`),
             `no_syahadah` = VALUES(`no_syahadah`)
