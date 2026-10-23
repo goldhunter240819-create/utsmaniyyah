@@ -150,8 +150,7 @@ try {
             // Hubungkan data santri ke periode 2026 ini jika belum memiliki periode valid
             $pdo->exec("UPDATE `santri` SET `periode_id` = $p26Id WHERE `periode_id` IS NULL OR `periode_id` = 0");
 
-            // Hapus periode lama (2025)
-            $pdo->exec("DELETE FROM `periode` WHERE `id` != $p26Id AND `tahun_pelajaran` LIKE '%2025%'");
+
         } else {
             // Jika hanya ada 1 periode lama, langsung ubah menjadi 2026
             $pdo->exec("
