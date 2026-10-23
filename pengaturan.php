@@ -88,6 +88,35 @@ require_once __DIR__ . '/includes/header.php';
     </div>
   </div>
 
+  <!-- Manajemen Akun Pengurus RTQ & Hak Akses (Hanya Developer yang dapat mengelola) -->
+  <div class="card" id="userManagementCard">
+    <div class="card-header">
+      <div class="card-title">
+        <i>👥</i> <span>Manajemen Akun Pengguna & Hak Akses Login</span>
+      </div>
+      <button class="btn btn-gold btn-sm" id="btnAddUserBtn" onclick="openAddUserModal()">➕ Tambah Akun Pengurus</button>
+    </div>
+    <div class="card-body">
+      <p style="color: var(--dark-600); font-size: 0.88rem; margin-bottom: 16px;">
+        Akun-akun di bawah ini digunakan oleh pengurus masing-masing unit RTQ untuk login ke sistem di halaman <strong>login.php</strong>. Setiap pengurus unit RTQ hanya dapat mengelola data santri dari unit RTQ yang ditetapkan.
+      </p>
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Username Login</th>
+              <th>Nama Pengurus / Akun</th>
+              <th>Unit RTQ yang Dipegang</th>
+              <th>Hak Akses (Role)</th>
+              <th class="text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="userListTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- Manajemen Periode / Tahun Ujian -->
   <div class="card">
     <div class="card-header">

@@ -255,6 +255,33 @@ try {
         }
     }
 
+    // Pastikan setiap unit RTQ (termasuk RTQ-NY / Nurul Yasin) memiliki akun login pengurus
+    try {
+        $stmtAllRtq = $pdo->query("SELECT id, kode, nama FROM `rtq`");
+        if ($stmtAllRtq) {
+            $allRtqList = $stmtAllRtq->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($allRtqList as $rRow) {
+                $stmtCheckU = $pdo->prepare("SELECT id FROM `users` WHERE `rtq_id` = ?");
+                $stmtCheckU->execute([$rRow['id']]);
+                if (!$stmtCheckU->fetch()) {
+                    $uname = strtolower(str_replace(['-', ' '], '', $rRow['kode']));
+                    if (stripos($rRow['nama'], 'Nurul Yasin') !== false || stripos($rRow['kode'], 'NY') !== false) {
+                        $uname = 'nurulyasin';
+                    }
+                    // Cek username agar tidak bentrok
+                    $stmtCheckUname = $pdo->prepare("SELECT id FROM `users` WHERE `username` = ?");
+                    $stmtCheckUname->execute([$uname]);
+                    if (!$stmtCheckUname->fetch()) {
+                        $stmtNewU = $pdo->prepare("INSERT INTO `users` (`username`, `password`, `nama`, `role`, `rtq_id`) VALUES (?, '123', ?, 'PENGURUS_RTQ', ?)");
+                        $stmtNewU->execute([$uname, "Admin " . $rRow['nama'], $rRow['id']]);
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+        // Ignore if error
+    }
+
     // 4. Seed Lembaga jika masih kosong
     $lembagaCount = (int)$pdo->query("SELECT COUNT(*) FROM `lembaga`")->fetchColumn();
     if ($lembagaCount === 0) {

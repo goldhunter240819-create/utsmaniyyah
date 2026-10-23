@@ -32,17 +32,22 @@ require_once __DIR__ . '/includes/header.php';
         </div>
       </div>
 
-      <div class="table-responsive">
-        <table class="table-custom">
+      <div class="table-responsive" style="overflow-x: auto; border-radius: 8px; border: 1px solid var(--gray-300);">
+        <table class="table-custom table-excel" style="min-width: 1350px;">
           <thead>
             <tr>
-              <th class="text-center" style="width: 5%;">No</th>
-              <th style="width: 25%;">Nama & TTL</th>
-              <th style="width: 15%;">Unit RTQ</th>
-              <th style="width: 10%;">Gender</th>
-              <th style="width: 15%;">No Induk & Ujian</th>
-              <th style="width: 15%;">No. Syahadah</th>
-              <th class="text-center" style="width: 15%;">Aksi</th>
+              <th class="text-center" style="width: 45px;">No</th>
+              <th style="min-width: 180px;">Nama Lengkap Santri</th>
+              <th class="text-center" style="width: 80px;">L / P</th>
+              <th style="min-width: 130px;">Unit RTQ</th>
+              <th style="min-width: 160px;">Tempat, Tanggal Lahir</th>
+              <th style="min-width: 130px;">Nama Ayah</th>
+              <th style="min-width: 130px;">Nama Ibu</th>
+              <th style="min-width: 220px;">Alamat Lengkap</th>
+              <th style="min-width: 90px;">No. Induk</th>
+              <th style="min-width: 90px;">No. Ujian</th>
+              <th style="min-width: 160px;">No. Syahadah</th>
+              <th class="text-center" style="width: 140px;">Aksi</th>
             </tr>
           </thead>
           <tbody id="santriTableBody"></tbody>

@@ -147,7 +147,7 @@ async function loadDataFromBackend() {
   const periodeFilter = document.getElementById('topbarPeriodeFilter')?.value || 'ALL';
 
   try {
-    const res = await fetch(`api.php?action=get_init&rtq_id=${rtqFilter}&periode_id=${periodeFilter}`);
+    const res = await fetch(`api.php?action=get_init&rtq_id=${rtqFilter}&periode_id=${periodeFilter}&_t=${Date.now()}`);
     const data = await res.json();
     
     if (data.status === 'unauthorized') {
@@ -476,36 +476,40 @@ function renderSantriTable() {
     return (s.nama || '').toLowerCase().includes(q) ||
            (s.no_induk || '').toLowerCase().includes(q) ||
            (s.no_ujian || '').toLowerCase().includes(q) ||
+           (s.ayah || '').toLowerCase().includes(q) ||
+           (s.ibu || '').toLowerCase().includes(q) ||
+           (s.alamat || '').toLowerCase().includes(q) ||
            (s.rtq_nama || '').toLowerCase().includes(q);
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding: 30px; color: var(--dark-500);">Tidak ada data santri ditemukan.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="text-center" style="padding: 30px; color: var(--dark-500);">Tidak ada data santri ditemukan.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = filtered.map((s, idx) => {
-    const genderBadge = s.gender === 'L' ? '<span class="badge badge-gender-l">L (Bin)</span>' : '<span class="badge badge-gender-p">P (Binti)</span>';
+    const genderBadge = s.gender === 'L' ? '<span class="badge badge-gender-l">L</span>' : '<span class="badge badge-gender-p">P</span>';
     return `
       <tr>
-        <td class="text-center font-bold">${idx + 1}</td>
+        <td class="text-center font-bold" style="color: var(--dark-600);">${idx + 1}</td>
         <td>
-          <strong style="color: var(--primary-900); font-size: 0.95rem;">${escapeHtml(s.nama)}</strong>
-          <div style="font-size: 0.78rem; color: var(--dark-500);">${escapeHtml(s.ttl || '-')}</div>
+          <strong style="color: var(--primary-900); font-size: 0.92rem;">${escapeHtml(s.nama)}</strong>
         </td>
+        <td class="text-center">${genderBadge}</td>
         <td>
-          <span class="badge badge-rtq">${escapeHtml(s.rtq_kode || s.rtq_nama || '-')}</span>
+          <span class="badge badge-rtq" style="font-size: 0.75rem;">${escapeHtml(s.rtq_nama || s.rtq_kode || '-')}</span>
         </td>
-        <td>${genderBadge}</td>
+        <td style="font-size: 0.82rem;">${escapeHtml(s.ttl || '-')}</td>
+        <td style="font-size: 0.84rem; font-weight: 600;">${escapeHtml(s.ayah || '-')}</td>
+        <td style="font-size: 0.84rem;">${escapeHtml(s.ibu || '-')}</td>
+        <td style="font-size: 0.8rem; color: var(--dark-700); line-height: 1.3;">${escapeHtml(s.alamat || '-')}</td>
+        <td class="text-center"><code>${escapeHtml(s.no_induk || '-')}</code></td>
+        <td class="text-center"><code>${escapeHtml(s.no_ujian || '-')}</code></td>
         <td>
-          <div>Induk: <code>${escapeHtml(s.no_induk || '-')}</code></div>
-          <div>Ujian: <code>${escapeHtml(s.no_ujian || '-')}</code></div>
-        </td>
-        <td>
-          <div style="font-size: 0.8rem; font-family: monospace; color: #047857; font-weight: 600;">${escapeHtml(s.no_syahadah || '-')}</div>
+          <div style="font-size: 0.78rem; font-family: monospace; color: #047857; font-weight: 600; white-space: nowrap;">${escapeHtml(s.no_syahadah || '-')}</div>
         </td>
         <td class="text-center">
-          <div class="action-btn-group">
+          <div class="action-btn-group" style="justify-content: center;">
             <button class="btn-icon-action edit" title="Edit Data Santri" onclick="openEditSantriModal(${s.id})">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </button>
@@ -631,6 +635,10 @@ async function handleSaveSantri(e) {
     if (result.status === 'success') {
       closeModal('santriModal');
       await loadDataFromBackend();
+      renderSantriTable();
+      renderPenilaianTable();
+      renderRekapTable();
+      renderDashboard();
       SwalAlert.success('Berhasil Disimpan', 'Data santri berhasil disimpan ke database MySQL.');
     } else {
       SwalAlert.error('Gagal Menyimpan', result.message || 'Gagal menyimpan data santri');
@@ -1610,6 +1618,9 @@ function populateConfigTab() {
       </tr>
     `).join('');
   }
+  
+  // Render Tabel Akun Pengguna
+  renderUserList();
 }
 
 async function handleSaveConfig(e) {
@@ -1643,11 +1654,202 @@ async function handleSaveConfig(e) {
   }
 }
 
+// ==========================================
+// MANAJEMEN AKUN PENGGUNA & LOGIN (DEVELOPER)
+// ==========================================
+function renderUserList() {
+  const tbody = document.getElementById('userListTableBody');
+  if (!tbody) return;
+  const isDeveloper = (appData.currentUser && (appData.currentUser.role === 'DEVELOPER' || appData.currentUser.role === 'SUPER_ADMIN' || appData.currentUser.username === 'Maul'));
+
+  const btnAddUser = document.getElementById('btnAddUserBtn');
+  if (btnAddUser) btnAddUser.style.display = isDeveloper ? 'inline-flex' : 'none';
+
+  if (!appData.daftarUsers || appData.daftarUsers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding: 20px; color: var(--dark-500);">Belum ada data akun pengguna.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = appData.daftarUsers.map(u => {
+    const isMaul = u.username === 'Maul';
+    const isMe = u.id == appData.currentUser.id;
+    const roleBadge = u.role === 'DEVELOPER' 
+      ? '<span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a;">👑 DEVELOPER</span>' 
+      : '<span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">🕌 PENGURUS RTQ</span>';
+
+    return `
+      <tr>
+        <td><strong style="color: var(--primary-800); font-family: monospace; font-size: 0.95rem;">${escapeHtml(u.username)}</strong></td>
+        <td><strong>${escapeHtml(u.nama)}</strong></td>
+        <td>${escapeHtml(u.rtq_nama || (u.role === 'DEVELOPER' ? 'Semua Unit RTQ (Pusat)' : '-'))}</td>
+        <td>${roleBadge}</td>
+        <td class="text-center">
+          ${isDeveloper ? `
+            <div style="display: flex; gap: 6px; justify-content: center;">
+              <button class="btn btn-outline btn-sm btn-icon" onclick="openEditUserModal(${u.id})" title="Edit Akun & Reset Password">✏️</button>
+              ${!isMaul && !isMe ? `
+                <button class="btn btn-outline btn-sm btn-icon" style="color: #dc2626; border-color: #fca5a5;" onclick="confirmDeleteUser(${u.id}, '${escapeHtml(u.username)}')" title="Hapus Akun">🗑️</button>
+              ` : `
+                <span title="Akun utama / aktif tidak dapat dihapus" style="opacity: 0.4; padding: 4px;">🔒</span>
+              `}
+            </div>
+          ` : `
+            <span style="color: var(--dark-500); font-size: 0.8rem;">Terkunci</span>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openAddUserModal() {
+  document.getElementById('userModalTitle').textContent = 'Tambah Akun Pengurus RTQ';
+  document.getElementById('userForm').reset();
+  document.getElementById('userIdInput').value = '';
+  document.getElementById('labelUserPassword').textContent = 'Password Login *';
+  document.getElementById('inputUserPassword').setAttribute('required', 'required');
+  document.getElementById('inputUserPassword').placeholder = 'Password akun baru';
+  document.getElementById('helpUserPassword').style.display = 'none';
+
+  populateUserModalRtqSelect();
+  handleUserRoleChange();
+  openModal('userModal');
+}
+
+function openEditUserModal(id) {
+  const u = appData.daftarUsers.find(x => x.id == id);
+  if (!u) return;
+
+  document.getElementById('userModalTitle').textContent = `Edit Akun: ${u.username}`;
+  document.getElementById('userIdInput').value = u.id;
+  document.getElementById('inputUserUsername').value = u.username;
+  document.getElementById('inputUserNama').value = u.nama;
+  document.getElementById('inputUserRole').value = u.role;
+  
+  document.getElementById('labelUserPassword').textContent = 'Ubah Password (Opsional)';
+  document.getElementById('inputUserPassword').removeAttribute('required');
+  document.getElementById('inputUserPassword').value = '';
+  document.getElementById('inputUserPassword').placeholder = 'Biarkan kosong jika tidak diganti';
+  document.getElementById('helpUserPassword').style.display = 'block';
+
+  populateUserModalRtqSelect();
+  if (u.rtq_id) {
+    document.getElementById('inputUserRtq').value = u.rtq_id;
+  }
+  handleUserRoleChange();
+  openModal('userModal');
+}
+
+function populateUserModalRtqSelect() {
+  const sel = document.getElementById('inputUserRtq');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Pilih Unit RTQ --</option>';
+  appData.daftarRtq.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = `${r.kode} - ${r.nama}`;
+    sel.appendChild(opt);
+  });
+}
+
+function handleUserRoleChange() {
+  const role = document.getElementById('inputUserRole').value;
+  const groupRtq = document.getElementById('groupUserRtq');
+  const inputRtq = document.getElementById('inputUserRtq');
+  if (role === 'DEVELOPER') {
+    groupRtq.style.display = 'none';
+    inputRtq.removeAttribute('required');
+  } else {
+    groupRtq.style.display = 'block';
+    inputRtq.setAttribute('required', 'required');
+  }
+}
+
+async function handleSaveUser(e) {
+  e.preventDefault();
+  const id = document.getElementById('userIdInput').value;
+  const username = document.getElementById('inputUserUsername').value.trim();
+  const password = document.getElementById('inputUserPassword').value.trim();
+  const nama = document.getElementById('inputUserNama').value.trim();
+  const role = document.getElementById('inputUserRole').value;
+  const rtq_id = document.getElementById('inputUserRtq').value;
+
+  if (role === 'PENGURUS_RTQ' && !rtq_id) {
+    SwalAlert.error('Peringatan', 'Silakan pilih Unit RTQ yang dikelola oleh akun pengurus ini.');
+    return;
+  }
+
+  const payload = {
+    id: id || null,
+    username,
+    password,
+    nama,
+    role,
+    rtq_id: role === 'DEVELOPER' ? null : rtq_id
+  };
+
+  try {
+    const res = await fetch('api.php?action=save_user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      closeModal('userModal');
+      await loadDataFromBackend();
+      populateConfigTab();
+      SwalAlert.success('Berhasil', `Akun "${username}" berhasil disimpan.`);
+    } else {
+      SwalAlert.error('Gagal', result.message || 'Gagal menyimpan akun.');
+    }
+  } catch (err) {
+    SwalAlert.error('Kesalahan', 'Terjadi kesalahan sistem saat menyimpan akun.');
+  }
+}
+
+async function confirmDeleteUser(id, username) {
+  const confirmResult = await SwalAlert.confirm(
+    'Hapus Akun Pengguna?',
+    `Apakah Anda yakin ingin menghapus akun login <strong>"${escapeHtml(username)}"</strong>? Pengurus tidak akan bisa login lagi dengan akun ini.`,
+    'Ya, Hapus Akun',
+    true
+  );
+
+  if (confirmResult.isConfirmed) {
+    try {
+      const res = await fetch('api.php?action=delete_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        await loadDataFromBackend();
+        populateConfigTab();
+        SwalAlert.toast(`Akun ${username} berhasil dihapus.`);
+      } else {
+        SwalAlert.error('Gagal', result.message || 'Gagal menghapus akun.');
+      }
+    } catch (err) {
+      SwalAlert.error('Kesalahan', 'Gagal menghapus akun dari server.');
+    }
+  }
+}
+
 // RTQ Modal
 function openAddRtqModal() {
   document.getElementById('rtqModalTitle').textContent = 'Tambah Unit RTQ Baru';
   document.getElementById('rtqForm').reset();
   document.getElementById('rtqIdInput').value = '';
+  
+  const rtqUserSection = document.getElementById('rtqAccountSection');
+  if (rtqUserSection) rtqUserSection.style.display = 'block';
+  const uInp = document.getElementById('inputRtqUsername');
+  const pInp = document.getElementById('inputRtqPassword');
+  if (uInp) uInp.value = '';
+  if (pInp) pInp.value = '';
+
   const delBtn = document.getElementById('btnDeleteRtqModal');
   if (delBtn) delBtn.style.display = 'none';
   openModal('rtqModal');
@@ -1664,6 +1866,10 @@ function openEditRtqModal(id) {
   document.getElementById('inputRtqKepalaModal').value = r.kepala_rtq;
   document.getElementById('inputRtqPengujiModal').value = r.ketua_penguji;
   document.getElementById('inputRtqWaModal').value = r.wa || '';
+
+  const rtqUserSection = document.getElementById('rtqAccountSection');
+  if (rtqUserSection) rtqUserSection.style.display = 'none';
+
   const delBtn = document.getElementById('btnDeleteRtqModal');
   if (delBtn) delBtn.style.display = 'inline-block';
   openModal('rtqModal');
@@ -1739,7 +1945,9 @@ async function handleSaveRtq(e) {
     alamat: document.getElementById('inputRtqAlamatModal').value.trim(),
     kepala_rtq: document.getElementById('inputRtqKepalaModal').value.trim(),
     ketua_penguji: document.getElementById('inputRtqPengujiModal').value.trim(),
-    wa: document.getElementById('inputRtqWaModal').value.trim()
+    wa: document.getElementById('inputRtqWaModal').value.trim(),
+    username: document.getElementById('inputRtqUsername')?.value.trim() || '',
+    password: document.getElementById('inputRtqPassword')?.value.trim() || ''
   };
 
   try {
@@ -1944,6 +2152,7 @@ function setupEventListeners() {
   document.getElementById('rtqForm')?.addEventListener('submit', handleSaveRtq);
   document.getElementById('periodeForm')?.addEventListener('submit', handleSavePeriode);
   document.getElementById('configForm')?.addEventListener('submit', handleSaveConfig);
+  document.getElementById('userForm')?.addEventListener('submit', handleSaveUser);
 
   document.getElementById('topbarRtqFilter')?.addEventListener('change', () => loadDataFromBackend());
   document.getElementById('topbarPeriodeFilter')?.addEventListener('change', () => loadDataFromBackend());

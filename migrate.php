@@ -102,7 +102,28 @@ try {
         echo "<div class='log-item'>✅ <strong>#{$id} [No.{$id}] {$s[1]} ({$s[2]})</strong><br>TTL: {$s[3]} | Ortu: {$s[4]} & {$s[5]} | Total Nilai: {$total}</div>";
     }
 
-    echo "<p><span class='badge badge-success'>Selesai!</span> Seluruh 11 santri berhasil disinkronkan ke database MySQL.</p>";
+    // Sinkronisasi Akun Pengurus RTQ (Termasuk RTQ Nurul Yasin Alhidayah / RTQ-NY)
+    echo "<h2 style='color: #60a5fa; font-size: 1.2rem; margin-top: 24px; border-bottom: 1px solid #334155; padding-bottom: 8px;'>👥 Sinkronisasi Akun Pengurus Unit RTQ</h2>";
+    $stmtAllRtq = $pdo->query("SELECT id, kode, nama FROM `rtq`");
+    $allRtq = $stmtAllRtq->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($allRtq as $rRow) {
+        $stmtCheckU = $pdo->prepare("SELECT id, username FROM `users` WHERE `rtq_id` = ?");
+        $stmtCheckU->execute([$rRow['id']]);
+        $existingU = $stmtCheckU->fetch(PDO::FETCH_ASSOC);
+        if (!$existingU) {
+            $uname = strtolower(str_replace(['-', ' '], '', $rRow['kode']));
+            if (stripos($rRow['nama'], 'Nurul Yasin') !== false || stripos($rRow['kode'], 'NY') !== false) {
+                $uname = 'nurulyasin';
+            }
+            $stmtNewU = $pdo->prepare("INSERT INTO `users` (`username`, `password`, `nama`, `role`, `rtq_id`) VALUES (?, '123', ?, 'PENGURUS_RTQ', ?)");
+            $stmtNewU->execute([$uname, "Admin " . $rRow['nama'], $rRow['id']]);
+            echo "<div class='log-item' style='border-left-color: #38bdf8;'>✨ Akun Baru Dibuat: <strong>{$uname}</strong> (Password: <code>123</code>) untuk <strong>{$rRow['nama']} ({$rRow['kode']})</strong></div>";
+        } else {
+            echo "<div class='log-item' style='border-left-color: #94a3b8;'>👤 Akun Pengurus: <strong>{$existingU['username']}</strong> terhubung ke <strong>{$rRow['nama']} ({$rRow['kode']})</strong></div>";
+        }
+    }
+
+    echo "<p><span class='badge badge-success'>Selesai!</span> Seluruh 11 santri dan akun pengurus RTQ berhasil disinkronkan ke database MySQL.</p>";
     echo "<a href='dashboard.php' class='btn'>👉 Kembali ke Dashboard Aplikasi</a>";
 
 } catch (Exception $e) {

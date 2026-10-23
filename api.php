@@ -6,6 +6,9 @@
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 require_once __DIR__ . '/config/database.php';
 
 $action = $_GET['action'] ?? '';
@@ -373,6 +376,17 @@ try {
                 $stmt = $pdo->prepare("INSERT INTO `rtq` (`kode`, `nama`, `alamat`, `kepala_rtq`, `ketua_penguji`, `wa`) VALUES (?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$kode, $nama, $alamat, $kepala, $penguji, $wa]);
                 $id = $pdo->lastInsertId();
+
+                $rtqUsername = trim($data['username'] ?? '');
+                $rtqPassword = trim($data['password'] ?? '');
+                if (!empty($rtqUsername) && !empty($rtqPassword)) {
+                    $stmtCheckUser = $pdo->prepare("SELECT id FROM `users` WHERE `username` = ?");
+                    $stmtCheckUser->execute([$rtqUsername]);
+                    if (!$stmtCheckUser->fetch()) {
+                        $stmtUser = $pdo->prepare("INSERT INTO `users` (`username`, `password`, `nama`, `role`, `rtq_id`) VALUES (?, ?, ?, 'PENGURUS_RTQ', ?)");
+                        $stmtUser->execute([$rtqUsername, $rtqPassword, "Admin " . $nama, $id]);
+                    }
+                }
             }
 
             echo json_encode(['status' => 'success', 'rtq_id' => $id]);
@@ -500,6 +514,89 @@ try {
 
             $stmt = $pdo->prepare("DELETE FROM `rtq` WHERE `id` = ?");
             $stmt->execute([$id]);
+            echo json_encode(['status' => 'success']);
+            break;
+
+        // ---------------------------------------------------------
+        // 11. TAMBAH / UPDATE AKUN PENGGUNA (Hanya Developer)
+        // ---------------------------------------------------------
+        case 'save_user':
+            if (!$isDeveloper) {
+                echo json_encode(['status' => 'error', 'message' => 'Hanya Developer yang dapat mengelola akun pengguna']);
+                exit;
+            }
+            $data = json_decode(file_get_contents('php://input'), true);
+            $userId = !empty($data['id']) ? (int)$data['id'] : null;
+            $username = trim($data['username'] ?? '');
+            $password = trim($data['password'] ?? '');
+            $nama = trim($data['nama'] ?? '');
+            $role = trim($data['role'] ?? 'PENGURUS_RTQ');
+            $rtq_id = !empty($data['rtq_id']) ? (int)$data['rtq_id'] : null;
+
+            if (empty($username) || empty($nama)) {
+                echo json_encode(['status' => 'error', 'message' => 'Username dan Nama Pengurus wajib diisi']);
+                exit;
+            }
+
+            if ($userId) {
+                // Cek duplikasi username pada user lain
+                $check = $pdo->prepare("SELECT id FROM `users` WHERE `username` = ? AND id != ?");
+                $check->execute([$username, $userId]);
+                if ($check->fetch()) {
+                    echo json_encode(['status' => 'error', 'message' => 'Username sudah digunakan oleh akun lain']);
+                    exit;
+                }
+
+                if (!empty($password)) {
+                    $stmt = $pdo->prepare("UPDATE `users` SET `username`=?, `password`=?, `nama`=?, `role`=?, `rtq_id`=? WHERE `id`=?");
+                    $stmt->execute([$username, $password, $nama, $role, $rtq_id, $userId]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE `users` SET `username`=?, `nama`=?, `role`=?, `rtq_id`=? WHERE `id`=?");
+                    $stmt->execute([$username, $nama, $role, $rtq_id, $userId]);
+                }
+            } else {
+                if (empty($password)) {
+                    echo json_encode(['status' => 'error', 'message' => 'Password wajib diisi untuk akun baru']);
+                    exit;
+                }
+
+                $check = $pdo->prepare("SELECT id FROM `users` WHERE `username` = ?");
+                $check->execute([$username]);
+                if ($check->fetch()) {
+                    echo json_encode(['status' => 'error', 'message' => 'Username sudah terdaftar']);
+                    exit;
+                }
+
+                $stmt = $pdo->prepare("INSERT INTO `users` (`username`, `password`, `nama`, `role`, `rtq_id`) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$username, $password, $nama, $role, $rtq_id]);
+                $userId = $pdo->lastInsertId();
+            }
+
+            echo json_encode(['status' => 'success', 'user_id' => $userId]);
+            break;
+
+        // ---------------------------------------------------------
+        // 12. HAPUS AKUN PENGGUNA (Hanya Developer)
+        // ---------------------------------------------------------
+        case 'delete_user':
+            if (!$isDeveloper) {
+                echo json_encode(['status' => 'error', 'message' => 'Hanya Developer yang dapat menghapus akun']);
+                exit;
+            }
+            $data = json_decode(file_get_contents('php://input'), true);
+            $userId = (int)($data['id'] ?? 0);
+
+            $stmtU = $pdo->prepare("SELECT `username` FROM `users` WHERE `id` = ?");
+            $stmtU->execute([$userId]);
+            $uName = $stmtU->fetchColumn();
+
+            if ($uName === 'Maul' || $userId === (int)($currentUser['id'] ?? 0)) {
+                echo json_encode(['status' => 'error', 'message' => 'Akun utama Developer tidak dapat dihapus!']);
+                exit;
+            }
+
+            $stmt = $pdo->prepare("DELETE FROM `users` WHERE `id` = ?");
+            $stmt->execute([$userId]);
             echo json_encode(['status' => 'success']);
             break;
 

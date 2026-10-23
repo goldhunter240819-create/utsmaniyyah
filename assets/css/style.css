@@ -896,6 +896,90 @@ body {
   background-color: #f8fafc;
 }
 
+/* Excel Spreadsheet Table Style */
+.table-excel {
+  border-collapse: collapse !important;
+  width: 100%;
+  font-family: inherit;
+  background: #ffffff;
+}
+
+.table-excel th {
+  background: #0f4c3a !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 0.76rem;
+  letter-spacing: 0.3px;
+  padding: 10px 10px;
+  border: 1px solid #093729 !important;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: left;
+}
+
+.table-excel th.text-center {
+  text-align: center;
+}
+
+.table-excel td {
+  padding: 8px 10px !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #1e293b;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  background: #ffffff;
+  vertical-align: middle;
+}
+
+.table-excel tbody tr:nth-child(even) td {
+  background: #fcfdfd;
+}
+
+.table-excel tbody tr:hover td {
+  background: #ecfdf5 !important;
+}
+
+.table-excel td code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-weight: 600;
+  color: #0f4c3a;
+  background: #f0fdf4;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-gender-l {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-gender-p {
+  background: #fce7f3;
+  color: #be185d;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  border: 1px solid #fbcfe8;
+}
+
+.badge-rtq {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
 /* Score Input Table */
 .score-input {
   width: 62px;

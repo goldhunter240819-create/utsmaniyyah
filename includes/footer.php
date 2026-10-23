@@ -110,6 +110,20 @@
               <label class="form-label">No. WhatsApp RTQ</label>
               <input type="text" id="inputRtqWaModal" class="form-control" placeholder="08xxxxxxxxxx">
             </div>
+            <div id="rtqAccountSection" style="grid-column: 1 / -1; margin-top: 10px; padding: 14px; background: #f0fdf4; border: 1px dashed #86efac; border-radius: 8px;">
+              <div style="font-weight: 700; font-size: 0.86rem; color: #166534; margin-bottom: 6px;">🔐 Buat Akun Login Pengurus RTQ (Opsional)</div>
+              <div style="font-size: 0.78rem; color: #15803d; margin-bottom: 10px;">Jika diisi, akun login pengurus untuk unit RTQ ini akan dibuat secara otomatis.</div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label" style="font-size: 0.8rem;">Username Login</label>
+                  <input type="text" id="inputRtqUsername" class="form-control" placeholder="Contoh: nurulyasin">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" style="font-size: 0.8rem;">Password Login</label>
+                  <input type="password" id="inputRtqPassword" class="form-control" placeholder="Minimal 3 karakter">
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
@@ -118,6 +132,53 @@
             <button type="button" class="btn btn-outline" onclick="closeModal('rtqModal')">Batal</button>
             <button type="submit" class="btn btn-primary">Simpan Unit RTQ</button>
           </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TAMBAH / EDIT AKUN PENGGUNA -->
+  <div class="modal-backdrop" id="userModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="userModalTitle">Tambah Akun Pengurus RTQ</h3>
+        <button class="modal-close" onclick="closeModal('userModal')">✕</button>
+      </div>
+      <form id="userForm">
+        <div class="modal-body">
+          <input type="hidden" id="userIdInput">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Username Login *</label>
+              <input type="text" id="inputUserUsername" class="form-control" placeholder="Contoh: u1, nurulyasin" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" id="labelUserPassword">Password Login *</label>
+              <input type="text" id="inputUserPassword" class="form-control" placeholder="Password akun">
+              <small id="helpUserPassword" style="display: none; color: var(--dark-500); font-size: 0.75rem; margin-top: 4px;">Kosongkan jika tidak ingin mengubah password.</small>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label">Nama Pengurus / Akun *</label>
+              <input type="text" id="inputUserNama" class="form-control" placeholder="Contoh: Admin RTQ Utsmaniyyah I" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hak Akses (Role) *</label>
+              <select id="inputUserRole" class="form-control" required onchange="handleUserRoleChange()">
+                <option value="PENGURUS_RTQ">PENGURUS_RTQ (Hanya Unit RTQ Tertentu)</option>
+                <option value="DEVELOPER">DEVELOPER (Akses Penuh Semua RTQ)</option>
+              </select>
+            </div>
+            <div class="form-group" id="groupUserRtq">
+              <label class="form-label">Unit RTQ yang Dikelola *</label>
+              <select id="inputUserRtq" class="form-control">
+                <!-- Diisi via JavaScript -->
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('userModal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Akun</button>
         </div>
       </form>
     </div>
