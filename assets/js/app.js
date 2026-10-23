@@ -401,16 +401,22 @@ function renderAll() {
 // 1. DASHBOARD
 // ==========================================
 function renderDashboard() {
+  const dashTotal = document.getElementById('dashTotalSantri');
+  if (!dashTotal) return;
+
   const { list, sorted } = calculateSantriStats();
   const total = list.length;
   const lulus = list.filter(s => s.isLulus).length;
   const tidakLulus = total - lulus;
   const avgOverall = total > 0 ? (list.reduce((acc, curr) => acc + curr.rataRata, 0) / total).toFixed(1) : 0;
 
-  document.getElementById('dashTotalSantri').textContent = total;
-  document.getElementById('dashLulus').textContent = lulus;
-  document.getElementById('dashTidakLulus').textContent = tidakLulus;
-  document.getElementById('dashRataRata').textContent = avgOverall;
+  dashTotal.textContent = total;
+  const dashL = document.getElementById('dashLulus');
+  if (dashL) dashL.textContent = lulus;
+  const dashTL = document.getElementById('dashTidakLulus');
+  if (dashTL) dashTL.textContent = tidakLulus;
+  const dashR = document.getElementById('dashRataRata');
+  if (dashR) dashR.textContent = avgOverall;
 
   // Podium
   const podium = document.getElementById('dashPodium');
@@ -733,16 +739,13 @@ async function handleSaveSantri(e) {
     if (result.status === 'success') {
       closeModal('santriModal');
       await loadDataFromBackend();
-      renderSantriTable();
-      renderPenilaianTable();
-      renderRekapTable();
-      renderDashboard();
       SwalAlert.success('Berhasil Disimpan', 'Data santri berhasil disimpan ke database MySQL.');
     } else {
       SwalAlert.error('Gagal Menyimpan', result.message || 'Gagal menyimpan data santri');
     }
   } catch (err) {
-    SwalAlert.error('Kesalahan', 'Terjadi kesalahan saat menyimpan ke database MySQL.');
+    console.error('Error saving santri:', err);
+    SwalAlert.error('Kesalahan', 'Terjadi kesalahan saat menyimpan: ' + (err.message || 'Kesalahan jaringan.'));
   }
 }
 
@@ -1615,14 +1618,17 @@ function printAllSyahadah(docType = 'both') {
 // 6. PENGATURAN MULTI-RTQ & PERIODE (CRUD)
 // ==========================================
 function populateConfigTab() {
+  const cfgLembaga = document.getElementById('cfgLembaga');
+  if (!cfgLembaga) return;
+
   const lbg = appData.lembaga || {};
-  document.getElementById('cfgLembaga').value = lbg.nama || '';
-  document.getElementById('cfgMetode').value = lbg.metode || '';
-  document.getElementById('cfgWilayah').value = lbg.wilayah || '';
-  document.getElementById('cfgTingkat').value = lbg.tingkat || '';
-  document.getElementById('cfgPimpinanLajnah').value = lbg.pimpinan_lajnah || '';
-  document.getElementById('cfgKetuaPanitia').value = lbg.ketua_panitia || '';
-  document.getElementById('cfgKkm').value = lbg.kkm || 60;
+  cfgLembaga.value = lbg.nama || '';
+  if (document.getElementById('cfgMetode')) document.getElementById('cfgMetode').value = lbg.metode || '';
+  if (document.getElementById('cfgWilayah')) document.getElementById('cfgWilayah').value = lbg.wilayah || '';
+  if (document.getElementById('cfgTingkat')) document.getElementById('cfgTingkat').value = lbg.tingkat || '';
+  if (document.getElementById('cfgPimpinanLajnah')) document.getElementById('cfgPimpinanLajnah').value = lbg.pimpinan_lajnah || '';
+  if (document.getElementById('cfgKetuaPanitia')) document.getElementById('cfgKetuaPanitia').value = lbg.ketua_panitia || '';
+  if (document.getElementById('cfgKkm')) document.getElementById('cfgKkm').value = lbg.kkm || 60;
 
   const isDeveloper = (appData.currentUser && (appData.currentUser.role === 'DEVELOPER' || appData.currentUser.role === 'SUPER_ADMIN' || appData.currentUser.username === 'Maul'));
 
