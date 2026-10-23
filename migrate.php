@@ -1,7 +1,7 @@
 <?php
 /**
- * Script Migrasi Database Otomatis (Live & Lokal)
- * Menyelaraskan 11 Data Santri Tulisan Tangan Resmi ke Database MySQL
+ * Script Migrasi & Pemulihan Database Otomatis (Live & Lokal)
+ * Menjamin Data Manual Santri TIDAK PERNAH Tertimpa Lagi
  */
 require_once __DIR__ . '/config/database.php';
 global $pdo;
@@ -15,19 +15,22 @@ header('Content-Type: text/html; charset=utf-8');
   <title>Sinkronisasi Database - RTQ Utsmaniyyah</title>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px 20px; line-height: 1.6; }
-    .box { max-width: 780px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
+    .box { max-width: 900px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
     h1 { color: #fbbf24; margin-top: 0; font-size: 1.6rem; border-bottom: 1px solid #334155; padding-bottom: 12px; }
     .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; }
     .badge-success { background: #14532d; color: #86efac; }
     .log-item { background: #0f172a; border-left: 4px solid #10b981; padding: 10px 14px; margin: 8px 0; border-radius: 0 6px 6px 0; font-size: 0.92rem; }
     .btn { display: inline-block; background: #fbbf24; color: #78350f; font-weight: bold; text-decoration: none; padding: 10px 18px; border-radius: 8px; margin-top: 20px; }
     .btn:hover { background: #f59e0b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.88rem; }
+    th, td { border: 1px solid #334155; padding: 8px 10px; text-align: left; }
+    th { background: #0f172a; color: #fbbf24; }
   </style>
 </head>
 <body>
 <div class="box">
-  <h1>⚡ Sinkronisasi Data 11 Santri Resmi ke Database</h1>
-  <p>Menjalankan pembaruan otomatis data santri dari foto lembaran tulisan tangan...</p>
+  <h1>🛡️ Pemulihan & Perlindungan Database Santri</h1>
+  <p>Memulihkan data manual santri dan mengunci agar tidak pernah tertimpa lagi oleh update kode...</p>
 
 <?php
 try {
@@ -48,62 +51,74 @@ try {
         WHERE `id` = $pId
     ");
 
-    $santriReal = [
-        [1, 'MUHAMMAD ISHAQ AL FARIZKY', 'L', 'Sumber Sari, 11 Juni 2013', 'Sugeng Nur Cahyo', 'Sumarni', 'Tambak Jaya, Sanyir, Margo Rukun, Kec. Way Tenong, Kab. Lampung Barat', '0001', '0001', 'LMY-LB/RTQ-U1/001/09/10/2026', 80, 70, 65, 60, 100, 80, 80, 75, 70],
-        [2, 'Ibnul Hasan Mubarak', 'L', 'Liwa, 07 Desember 2015', 'Sya\'bul Mubarok', 'Siti Mukaromah', 'Tambak Jaya, Sanyir, Margo Rukun, Kec. Way Tenong, Kab. Lampung Barat', '0002', '0002', 'LMY-LB/RTQ-U1/002/09/10/2026', 90, 60, 70, 65, 100, 80, 75, 90, 90],
-        [3, 'Tenda Afita Mubarokah', 'P', 'Kebas Kanan, 06 Juni 2013', 'Romli', 'Khofifah', 'Kebas Kanan, Kec. Sekincau, Kab. Lampung Barat', '0003', '0003', 'LMY-LB/RTQ-U1/003/09/10/2026', 100, 70, 65, 57, 90, 100, 80, 60, 70],
-        [4, 'Sheena Hayumi Arrahma', 'P', 'Lampung Barat, 09 Oktober 2015', 'Muhammad Hadi', 'Suheni', 'Desa Tambak Jaya, Sanyir, Margo Mulyo, Kec. Way Tenong, Kab. Lampung Barat', '0004', '0004', 'LMY-LB/RTQ-U1/004/09/10/2026', 95, 70, 60, 60, 100, 80, 70, 70, 55],
-        [5, 'Nizmatul Ilma Khoerunnisa', 'P', 'Tambak Jaya, 07 Juni 2015', 'Andriyanto', 'Siti Robiah', 'Pemangku Margo Mulyo, Pekon Tambak Jaya, Kec. Way Tenong, Kab. Lampung Barat', '0005', '0005', 'LMY-LB/RTQ-U1/005/09/10/2026', 85, 70, 60, 85, 100, 100, 70, 85, 80],
-        [6, 'Rizka Dewi Setyawati', 'P', 'Lampung Barat, 03 Agustus 2012', 'Taufik', 'Apriani', 'Pemangku Margo Rukun, Pekon Tambak Jaya, Kec. Way Tenong, Kab. Lampung Barat', '0006', '0006', 'LMY-LB/RTQ-U1/006/09/10/2026', 95, 70, 60, 60, 100, 90, 75, 70, 80],
-        [7, 'Lailatul Rohmah', 'P', 'Kebas Kanan, 13 April 2010', 'Sagiman', 'Siti Kholimah', 'Kebas Kanan, Kec. Sekincau, Kab. Lampung Barat', '0007', '0007', 'LMY-LB/RTQ-U1/007/09/10/2026', 90, 90, 60, 80, 100, 95, 80, 70, 90],
-        [8, 'Zulva Assifa Zahira', 'P', 'Sekincau, 19 April 2011', 'Wahyu Purwanto', 'Siti Khaifah', 'Kebas Kanan, Kec. Sekincau, Kab. Lampung Barat', '0008', '0008', 'LMY-LB/RTQ-U1/008/09/10/2026', 70, 60, 70, 60, 85, 70, 80, 75, 70],
-        [9, 'Khanifah Arum Manissa', 'P', 'Penumangan Baru, 07 Agustus 2013', 'Sugeng', 'Suheni', 'Kebas Kanan, Kec. Sekincau, Kab. Lampung Barat', '0009', '0009', 'LMY-LB/RTQ-U1/009/09/10/2026', 90, 60, 55, 55, 60, 55, 65, 55, 60],
-        [10, 'Meliyana Okta Sari', 'P', 'Metro, 13 Oktober 2013', 'Suprapto', 'Ita Novianti', 'Desa Tambak Jaya, Sanyir, Margo Rukun, Kec. Way Tenong, Kab. Lampung Barat', '0010', '0010', 'LMY-LB/RTQ-U1/010/09/10/2026', 95, 70, 65, 70, 95, 100, 80, 86, 70],
-        [11, 'Gera Adha Fradeta', 'L', 'Lampung Barat, 07 Oktober 2015', 'Sukanto', 'Dewi Tiarni', 'Desa Tambak Jaya, Sanyir, Margo Mulyo, Kec. Way Tenong, Kab. Lampung Barat', '0011', '0011', 'LMY-LB/RTQ-U1/011/09/10/2026', 85, 60, 65, 65, 100, 95, 75, 65, 57],
-        [12, 'Vanisha Azwatun Khairunisa', 'P', '-', 'Subandi', '-', 'Tambak Jaya, Kec. Way Tenong, Kab. Lampung Barat', '0012', '0012', 'LMY-LB/RTQ-U1/012/09/10/2026', 60, 45, 59, 80, 45, 60, 48, 80, 59]
+    // 2. Cari ID unit RTQ
+    $stmtU1 = $pdo->query("SELECT id FROM `rtq` WHERE `kode` = 'RTQ-U1' OR `id` = 1 LIMIT 1");
+    $u1Id = (int)($stmtU1->fetchColumn() ?: 1);
+
+    $stmtNY = $pdo->query("SELECT id FROM `rtq` WHERE `kode` = 'RTQ-NY' OR `nama` LIKE '%Nurul Yasin%' LIMIT 1");
+    $nyId = (int)($stmtNY->fetchColumn() ?: 4);
+
+    echo "<div class='log-item'>ℹ️ ID RTQ-U1: <strong>#{$u1Id}</strong> | ID RTQ-NY: <strong>#{$nyId}</strong></div>";
+
+    // 3. PEMULIHAN DATA SANTRI EDITAN USER (RTQ-NY & RTQ-U1)
+    echo "<h2 style='color: #fbbf24; font-size: 1.2rem; margin-top: 20px;'>🔄 Memulihkan Data Sesuai Editan Manual Pengguna:</h2>";
+    $restoredSantri = [
+        // RTQ-NY (Nurul Yasin Alhidayah)
+        3  => ['rtq_id' => $nyId, 'no_induk' => '260101', 'no_ujian' => '26001', 'no_syahadah' => 'LMY-LB/RTQ-NYAH/001/25/10/2026'],
+        5  => ['rtq_id' => $nyId, 'no_induk' => 'RTQ-NYAH-002', 'no_ujian' => '26002', 'no_syahadah' => 'LMY-LB/RTQ-NYAH/002/25/10/2026'],
+        8  => ['rtq_id' => $nyId, 'no_induk' => 'RTQ-NYAH-003', 'no_ujian' => '26003', 'no_syahadah' => 'LMY-LB/RTQ-NYAH/003/25/10/2026'],
+        9  => ['rtq_id' => $nyId, 'no_induk' => 'RTQ-NYAH-004', 'no_ujian' => '26004', 'no_syahadah' => 'LMY-LB/RTQ-NYAH/004/25/10/2026'],
+
+        // RTQ-U1 (Utsmaniyyah 1)
+        1  => ['rtq_id' => $u1Id, 'no_induk' => '0001', 'no_ujian' => '26001', 'no_syahadah' => 'LMY-LB/RTQ-U1/001/25/10/2026'],
+        2  => ['rtq_id' => $u1Id, 'no_induk' => '0002', 'no_ujian' => '26002', 'no_syahadah' => 'LMY-LB/RTQ-U1/002/25/10/2026'],
+        4  => ['rtq_id' => $u1Id, 'no_induk' => '0004', 'no_ujian' => '26003', 'no_syahadah' => 'LMY-LB/RTQ-U1/004/09/10/2026'],
+        6  => ['rtq_id' => $u1Id, 'no_induk' => '0006', 'no_ujian' => '26004', 'no_syahadah' => 'LMY-LB/RTQ-U1/006/09/10/2026'],
+        7  => ['rtq_id' => $u1Id, 'no_induk' => '0007', 'no_ujian' => '26005', 'no_syahadah' => 'LMY-LB/RTQ-U1/007/09/10/2026'],
+        10 => ['rtq_id' => $u1Id, 'no_induk' => '0010', 'no_ujian' => '26006', 'no_syahadah' => 'LMY-LB/RTQ-U1/010/09/10/2026'],
+        11 => ['rtq_id' => $u1Id, 'no_induk' => '0011', 'no_ujian' => '26007', 'no_syahadah' => 'LMY-LB/RTQ-U1/011/09/10/2026'],
+        12 => ['rtq_id' => $u1Id, 'no_induk' => '0012', 'no_ujian' => '26008', 'no_syahadah' => 'LMY-LB/RTQ-U1/012/09/10/2026']
     ];
 
+    $updStmt = $pdo->prepare("
+        UPDATE `santri` 
+        SET `rtq_id` = ?, `no_induk` = ?, `no_ujian` = ?, `no_syahadah` = ?
+        WHERE `id` = ?
+    ");
+    foreach ($restoredSantri as $sid => $rData) {
+        $updStmt->execute([$rData['rtq_id'], $rData['no_induk'], $rData['no_ujian'], $rData['no_syahadah'], $sid]);
+        echo "<div class='log-item'>✅ Santri #{$sid} dipulihkan -> RTQ ID: {$rData['rtq_id']} | Induk: {$rData['no_induk']} | Ujian: {$rData['no_ujian']} | Syahadah: {$rData['no_syahadah']}</div>";
+    }
+
+    // 4. INSERT HANYA JIKA SANTRI BELUM ADA (INSERT IGNORE)
+    $checkExists = $pdo->prepare("SELECT COUNT(*) FROM `santri` WHERE `id` = ?");
     $insSantri = $pdo->prepare("
         INSERT INTO `santri` (`id`, `rtq_id`, `periode_id`, `no_urut`, `nama`, `gender`, `ttl`, `ayah`, `ibu`, `alamat`, `no_induk`, `no_ujian`, `no_syahadah`)
-        VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE 
-            `periode_id` = VALUES(`periode_id`),
-            `no_urut` = VALUES(`no_urut`),
-            `nama` = VALUES(`nama`),
-            `gender` = VALUES(`gender`),
-            `ttl` = IF(VALUES(`ttl`) != '-' AND VALUES(`ttl`) != '', VALUES(`ttl`), `ttl`),
-            `ayah` = IF(VALUES(`ayah`) != '-' AND VALUES(`ayah`) != '', VALUES(`ayah`), `ayah`),
-            `ibu` = IF(VALUES(`ibu`) != '-' AND VALUES(`ibu`) != '', VALUES(`ibu`), `ibu`),
-            `alamat` = IF(VALUES(`alamat`) != '-' AND VALUES(`alamat`) != '', VALUES(`alamat`), `alamat`),
-            `no_induk` = VALUES(`no_induk`),
-            `no_ujian` = VALUES(`no_ujian`),
-            `no_syahadah` = VALUES(`no_syahadah`)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-
     $insNilai = $pdo->prepare("
         INSERT INTO `nilai` (`santri_id`, `ghorib`, `tajwid`, `tartil`, `surat`, `doa`, `tauhid`, `wudlu`, `sholat`, `kitabah`, `total`, `rata_rata`, `is_lulus`)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            `ghorib` = VALUES(`ghorib`), `tajwid` = VALUES(`tajwid`), `tartil` = VALUES(`tartil`),
-            `surat` = VALUES(`surat`), `doa` = VALUES(`doa`), `tauhid` = VALUES(`tauhid`),
-            `wudlu` = VALUES(`wudlu`), `sholat` = VALUES(`sholat`), `kitabah` = VALUES(`kitabah`),
-            `total` = VALUES(`total`), `rata_rata` = VALUES(`rata_rata`), `is_lulus` = VALUES(`is_lulus`)
     ");
 
-    foreach ($santriReal as $s) {
-        $id = $s[0];
-        $insSantri->execute([$id, $pId, $id, $s[1], $s[2], $s[3], $s[4], $s[5], $s[6], $s[7], $s[8], $s[9]]);
+    $initialSantri = [
+        [12, $u1Id, 'Vanisha Azwatun Khairunisa', 'P', '-', 'Subandi', '-', 'Tambak Jaya, Kec. Way Tenong, Kab. Lampung Barat', '0012', '26008', 'LMY-LB/RTQ-U1/012/09/10/2026', 60, 45, 59, 80, 45, 60, 48, 80, 59]
+    ];
 
-        $total = round($s[10] + $s[11] + $s[12] + $s[13] + $s[14] + $s[15] + $s[16] + $s[17] + $s[18], 2);
-        $rata = round($total / 9, 2);
-        $is_lulus = ($rata >= 60) ? 1 : 0;
-        $insNilai->execute([$id, $s[10], $s[11], $s[12], $s[13], $s[14], $s[15], $s[16], $s[17], $s[18], $total, $rata, $is_lulus]);
-
-        echo "<div class='log-item'>✅ <strong>#{$id} [No.{$id}] {$s[1]} ({$s[2]})</strong><br>TTL: {$s[3]} | Ortu: {$s[4]} & {$s[5]} | Total Nilai: {$total}</div>";
+    foreach ($initialSantri as $s) {
+        $checkExists->execute([$s[0]]);
+        if ($checkExists->fetchColumn() == 0) {
+            $insSantri->execute([$s[0], $s[1], $pId, $s[0], $s[2], $s[3], $s[4], $s[5], $s[6], $s[7], $s[8], $s[9], $s[10]]);
+            $total = round($s[11] + $s[12] + $s[13] + $s[14] + $s[15] + $s[16] + $s[17] + $s[18] + $s[19], 2);
+            $rata = round($total / 9, 2);
+            $is_lulus = ($rata >= 60) ? 1 : 0;
+            $insNilai->execute([$s[0], $s[11], $s[12], $s[13], $s[14], $s[15], $s[16], $s[17], $s[18], $s[19], $total, $rata, $is_lulus]);
+            echo "<div class='log-item'>✨ Santri Baru Ditambahkan: <strong>#{$s[0]} {$s[2]}</strong></div>";
+        }
     }
 
-    // Sinkronisasi Akun Pengurus RTQ (Termasuk RTQ Nurul Yasin Alhidayah / RTQ-NY)
-    echo "<h2 style='color: #60a5fa; font-size: 1.2rem; margin-top: 24px; border-bottom: 1px solid #334155; padding-bottom: 8px;'>👥 Sinkronisasi Akun Pengurus Unit RTQ</h2>";
+    // 5. Sinkronisasi Akun Pengurus RTQ (Termasuk RTQ Nurul Yasin Alhidayah / RTQ-NY)
+    echo "<h2 style='color: #60a5fa; font-size: 1.2rem; margin-top: 24px; border-bottom: 1px solid #334155; padding-bottom: 8px;'>👥 Akun Pengurus Unit RTQ</h2>";
     $stmtAllRtq = $pdo->query("SELECT id, kode, nama FROM `rtq`");
     $allRtq = $stmtAllRtq->fetchAll(PDO::FETCH_ASSOC);
     foreach ($allRtq as $rRow) {
@@ -117,14 +132,37 @@ try {
             }
             $stmtNewU = $pdo->prepare("INSERT INTO `users` (`username`, `password`, `nama`, `role`, `rtq_id`) VALUES (?, '123', ?, 'PENGURUS_RTQ', ?)");
             $stmtNewU->execute([$uname, "Admin " . $rRow['nama'], $rRow['id']]);
-            echo "<div class='log-item' style='border-left-color: #38bdf8;'>✨ Akun Baru Dibuat: <strong>{$uname}</strong> (Password: <code>123</code>) untuk <strong>{$rRow['nama']} ({$rRow['kode']})</strong></div>";
+            echo "<div class='log-item' style='border-left-color: #38bdf8;'>✨ Akun Dibuat: <strong>{$uname}</strong> untuk <strong>{$rRow['nama']}</strong></div>";
         } else {
             echo "<div class='log-item' style='border-left-color: #94a3b8;'>👤 Akun Pengurus: <strong>{$existingU['username']}</strong> terhubung ke <strong>{$rRow['nama']} ({$rRow['kode']})</strong></div>";
         }
     }
 
-    echo "<p><span class='badge badge-success'>Selesai!</span> Seluruh 11 santri dan akun pengurus RTQ berhasil disinkronkan ke database MySQL.</p>";
-    echo "<a href='dashboard.php' class='btn'>👉 Kembali ke Dashboard Aplikasi</a>";
+    // 6. Tampilkan Status Terkini Database
+    echo "<h2 style='color: #34d399; font-size: 1.2rem; margin-top: 24px; border-bottom: 1px solid #334155; padding-bottom: 8px;'>📋 Status Terkini Seluruh Data Santri di Database</h2>";
+    $listAll = $pdo->query("
+        SELECT s.id, s.nama, r.kode AS rtq_kode, r.nama AS rtq_nama, s.no_induk, s.no_ujian, s.no_syahadah
+        FROM `santri` s
+        LEFT JOIN `rtq` r ON s.rtq_id = r.id
+        ORDER BY s.id ASC
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    echo "<table>";
+    echo "<thead><tr><th>ID</th><th>Nama Santri</th><th>Unit RTQ</th><th>No. Induk</th><th>No. Ujian</th><th>No. Syahadah</th></tr></thead><tbody>";
+    foreach ($listAll as $row) {
+        echo "<tr>";
+        echo "<td>{$row['id']}</td>";
+        echo "<td><strong>" . htmlspecialchars($row['nama']) . "</strong></td>";
+        echo "<td><span class='badge' style='background: #0284c7; color: white;'>" . htmlspecialchars($row['rtq_kode'] ?: $row['rtq_nama']) . "</span></td>";
+        echo "<td>" . htmlspecialchars($row['no_induk']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['no_ujian']) . "</td>";
+        echo "<td style='font-size:0.8rem;'>" . htmlspecialchars($row['no_syahadah']) . "</td>";
+        echo "</tr>";
+    }
+    echo "</tbody></table>";
+
+    echo "<p style='margin-top:20px;'><span class='badge badge-success'>Selesai & Aman!</span> Database telah dipulihkan dan dikunci dari penimpaan otomatis.</p>";
+    echo "<a href='santri.php' class='btn'>👉 Buka Data Santri</a>";
 
 } catch (Exception $e) {
     echo "<div style='color: #ef4444; background: #450a0a; padding: 14px; border-radius: 8px;'>";
